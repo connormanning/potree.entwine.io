@@ -64,9 +64,9 @@
 			"onPointCloudLoaded": onPointCloudLoaded
 		});
 
-		viewer.setEDLEnabled(false);
+		viewer.setEDLEnabled(true);
 		viewer.setPointSize(2);
-		viewer.setMaterial("Intensity");
+		viewer.setMaterial("Classification");
 		viewer.setFOV(80);
 		viewer.setPointSizing("Fixed");
 		viewer.setQuality("Squares");
@@ -76,7 +76,7 @@
         // Since this parameter to addPointCloud starts with the string
         // 'greyhound://', it is recognised as a greyhound server URL.
         var server = "greyhound://cache.greyhound.io/resource/";
-        var resource = "nyc-h";
+        var resource = "nz-n";
 
 		viewer.addPointCloud(server + resource + "/");
 		viewer.loadGUI();
