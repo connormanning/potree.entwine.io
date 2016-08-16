@@ -1851,6 +1851,15 @@ Potree.GreyhoundBinaryLoader.prototype.parse = function(node, buffer){
  * @author Oscar Martinez Rubi
  * @author Connor Manning
  */
+var getQueryParam = function(name) {
+    name = name.replace(/[\[\]]/g, "\\$&");
+    var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+        results = regex.exec(window.location.href);
+    if (!results) return null;
+    if (!results[2]) return '';
+    return decodeURIComponent(results[2].replace(/\+/g, " "));
+}
+
 Potree.GreyhoundLoader = function(){
 
 };
@@ -1964,20 +1973,39 @@ Potree.GreyhoundLoader.load = function load(url, callback) {
                 ];
 
                 var radius = (globalBounds[3] - globalBounds[0]) / 2;
-
                 console.log('Radius', radius);
 
-                var SCALE = .01;
-                if (radius > 10000) SCALE = 1;
-                else if (radius > 2500) SCALE = .1;
+                var scale = .01;
+                if (radius > 10000) scale = 1.0;
+                else if (radius > 2500) scale = 0.1;
+
+                /*
+                var factor = 100000;
+                var bloat = radius * factor;
+
+                var rawScale = Math.max(bloat / Math.pow(2, 30), 10);
+                var multScale = Math.pow(10, Math.floor(Math.log10(rawScale)));
+                var scale = multScale / factor;
+                */
+
+                if (getQueryParam('scale')) {
+                    scale = parseFloat(getQueryParam('scale'));
+                    console.log('Overriding scale:', scale);
+                }
+                else {
+                    console.log('Scale', scale);
+                }
 
                 var localBounds = globalBounds.map(function(v, i) {
-                    return (v - offset[i % 3]) / SCALE;
+                    return (v - offset[i % 3]) / scale;
                 });
 
                 var localTightBounds = globalTightBounds.map(function(v, i) {
-                    return (v - offset[i % 3]) / SCALE;
+                    return (v - offset[i % 3]) / scale;
                 });
+
+                console.log('Bounds', localBounds);
+                console.log('Conforming bounds', localTightBounds);
 
 				var baseDepth = Math.max(8, greyhoundInfo.baseDepth);
 
@@ -2065,7 +2093,7 @@ Potree.GreyhoundLoader.load = function load(url, callback) {
 
 				pgg.bbOffset = new THREE.Vector3(0,0,0);
 				pgg.offset = new THREE.Vector3(0,0,0);
-				pgg.scale = SCALE || greyhoundInfo.scale;
+				pgg.scale = scale || greyhoundInfo.scale;
 
 				pgg.loader = new Potree.GreyhoundBinaryLoader(
                         version, boundingBox, pgg.scale);
