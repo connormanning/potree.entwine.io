@@ -11801,6 +11801,15 @@ Object.defineProperty(ProgressBar.prototype, "message", {
 		this.elProgressMessage.innerHTML = message;
 	}
 });
+var getQueryParam = function(name) {
+    name = name.replace(/[\[\]]/g, "\\$&");
+    var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+        results = regex.exec(window.location.href);
+    if (!results) return null;
+    if (!results[2]) return '';
+    return decodeURIComponent(results[2].replace(/\+/g, " "));
+}
+
 
 Potree.Viewer = function(domElement, args){
 	var scope = this;
@@ -11920,7 +11929,13 @@ Potree.Viewer = function(domElement, args){
 
 			scope.referenceFrame.updateMatrixWorld(true);
 
-			if(sg.radius > 50*1000){
+            if(sg.radius > 100*1000){
+                console.log('sg');
+                scope.camera.near = 10000;
+                scope.camera.far = 1000000000000;
+            }else if(sg.radius > 100*1000){
+                scope.camera.near = 500;
+            }else if(sg.radius > 50*1000){
 				scope.camera.near = 10;
 			}else if(sg.radius > 10*1000){
 				scope.camera.near = 2;
@@ -12935,8 +12950,9 @@ Potree.Viewer = function(domElement, args){
 		var width = scope.renderArea.clientWidth;
 		var height = scope.renderArea.clientHeight;
 		var aspect = width / height;
-		var near = 0.1;
+		var near = 500;
 		var far = 1000*1000;
+        far = 1000*1000*1000*1000;
 
 		scope.scene = new THREE.Scene();
 		scope.scenePointCloud = new THREE.Scene();
