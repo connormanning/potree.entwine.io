@@ -112,8 +112,8 @@ var Page = React.createClass({
                                 name='New York City'
                             />
                             <Thumb
-                                href='/data/redrock.html'
-                                src='redrock.jpg'
+                                href='/data/red-rocks.html'
+                                src='red-rocks.jpg'
                                 name='Red Rocks Amphitheatre'
                             />
                             <Thumb
@@ -127,9 +127,9 @@ var Page = React.createClass({
                                 name='Autzen Stadium'
                             />
                             <Thumb
-                                href='/data/nepal.html'
-                                src='nepal.jpg'
-                                name='Nepal'
+                                href='/data/vanuatu-village.html'
+                                src='vanuatu-village.jpg'
+                                name='Vanuatu Village - Nepal'
                             />
                             <Thumb
                                 href='/data/half-dome.html'

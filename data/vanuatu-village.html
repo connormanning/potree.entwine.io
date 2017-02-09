@@ -66,7 +66,7 @@
 
 		viewer.setEDLEnabled(true);
 		viewer.setPointSize(3);
-		viewer.setMaterial("Intensity");
+		viewer.setMaterial("RGB");
 		viewer.setFOV(80);
 		viewer.setPointSizing("Fixed");
 		viewer.setQuality("Squares");
@@ -76,7 +76,7 @@
         // Since this parameter to addPointCloud starts with the string
         // 'greyhound://', it is recognised as a greyhound server URL.
         var server = "greyhound://data.greyhound.io/resource/";
-        var resource = "uncompahgre-h";
+        var resource = "vanuatu-village";
 
 		viewer.addPointCloud(server + resource + "/");
 		viewer.loadGUI();
