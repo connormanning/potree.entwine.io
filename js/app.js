@@ -74,18 +74,44 @@ var Footer = React.createClass({
 
 var Thumb = React.createClass({
     render: function() {
-        return <a href={ this.props.href } className='col-xs-6 col-sm-4'>
+        var r = this.props.resource;
+        return <a
+            href={ '/data/' + r.page + '.html' }
+            className='col-xs-6 col-sm-4'
+        >
             <img
                 className='img-responsive thumb img-thumbnail'
-                src={ 'resources/images/' + this.props.src }
+                src={ 'resources/images/' + r.page + '.jpg' }
             />
-            <p className='lead center-block'>{ this.props.name }</p>
+            <p className='lead center-block'>{ r.name }</p>
         </a>;
     }
 });
 
+var Resource = function(name, page) {
+    this.name = name;
+    this.page = page;
+};
+
 var Page = React.createClass({
     render: function() {
+        var resources = [
+            new Resource('Denmark', 'denmark'),
+            new Resource('Railway - France', 'sncf'),
+            new Resource('Red Rocks Amphitheatre', 'red-rocks'),
+            new Resource('New Zealand', 'new-zealand'),
+            new Resource('New York City', 'nyc'),
+            new Resource('Iowa', 'iowa'),
+            new Resource('Lake Isabella', 'lake-isabella'),
+            new Resource('Autzen Stadium', 'autzen'),
+            new Resource('Vanuatu Village - Nepal', 'vanuatu-village'),
+            new Resource('Half Dome - Yosemite', 'half-dome'),
+            new Resource('Cedar Falls Bridge - Iowa', 'iowa-bridge'),
+            new Resource('Mount St. Helens', 'st-helens'),
+            // new Resource('Space Shuttle', 'shuttle'),
+            // new Resource('Lone Star Geyser', 'lone-star'),
+        ];
+
         return <div>
             <Header/>
                 <div className='container-fluid'>
@@ -106,56 +132,15 @@ var Page = React.createClass({
                                 <span style={ { color: '#39B44A' } }> / </span>
                                 Potree Demo
                             </h2>
-                            <Thumb
-                                href='/data/nyc.html'
-                                src='nyc.jpg'
-                                name='New York City'
-                            />
-                            <Thumb
-                                href='/data/red-rocks.html'
-                                src='red-rocks.jpg'
-                                name='Red Rocks Amphitheatre'
-                            />
-                            <Thumb
-                                href='/data/isabella.html'
-                                src='isabella.jpg'
-                                name='Lake Isabella'
-                            />
-                            <Thumb
-                                href='/data/autzen.html'
-                                src='autzen.jpg'
-                                name='Autzen Stadium'
-                            />
-                            <Thumb
-                                href='/data/vanuatu-village.html'
-                                src='vanuatu-village.jpg'
-                                name='Vanuatu Village - Nepal'
-                            />
-                            <Thumb
-                                href='/data/half-dome.html'
-                                src='half-dome.jpg'
-                                name='Half Dome - Yosemite'
-                            />
-                            <Thumb
-                                href='/data/iowa-bridge.html'
-                                src='iowa-bridge.jpg'
-                                name='Iowa Bridge'
-                            />
-                            <Thumb
-                                href='/data/st-helens.html'
-                                src='st-helens.jpg'
-                                name='Mount St. Helens'
-                            />
-                            <Thumb
-                                href='/data/shuttle.html'
-                                src='shuttle.jpg'
-                                name='Space Shuttle'
-                            />
-                            <Thumb
-                                href='/data/lone-star.html'
-                                src='lone-star.jpg'
-                                name='Lone Star Geyser'
-                            />
+                            {
+                                resources.map((v, i) =>
+                                        <Thumb
+                                            key={ i }
+                                            resource={ v }
+                                            name={ v.name }
+                                            href={ v.page }
+                                            src={ v.image }/>)
+                            }
                         </div>
                     </div>
                 </div>
