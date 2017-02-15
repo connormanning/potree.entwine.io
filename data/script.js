@@ -10,20 +10,6 @@ var getQueryParam = function(name) {
 window.viewer = new Potree.Viewer(
         document.getElementById('potree_render_area'));
 
-var parseBool = (v) => v === 'true' || v === true;
-var parseArray = (v) => {
-    if (Array.isArray(v)) return v;
-    var tokenize = (s) => {
-        if (v.split(s).length > 1) {
-            var p = v.replace(/[\[\]]/g, '')
-                .split(s).map((f) => parseFloat(f));
-            return p;
-        }
-        return null;
-    };
-    return tokenize(';') || tokenize(',');
-}
-
 var defaults = {
     edl: true,
     edlStrength: 1,
@@ -229,13 +215,10 @@ var resource =
 
 if (!resource) throw new Error('No resource supplied');
 
-// if (resource[0] == '"') resource = JSON.parse(resource);
-// if (server[0] == '"') server = JSON.parse(server);
-
 if (server.substring(0, protocol.length) != protocol) {
     server = protocol + server;
 }
-if (server[server.length - 1] != '/') server = server + '/';
+if (server.slice(-1) != '/') server = server + '/';
 
 var root = server + 'resource/' + resource + '/';
 
