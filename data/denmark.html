@@ -73,6 +73,45 @@
     </script>
 
     <script type="text/javascript" src="script.js"></script>
+    <script type="text/javascript">
+        var Vec = (x, y, z) => new THREE.Vector3(x, y, z);
+
+        viewer.scene.addAnnotation(Vec(1136415.91, 7589743.28, 80.25), {
+            title: "Aarhus",
+            cameraPosition: Vec(1134090.90, 7587109.09, 1842.13),
+            cameraTarget: Vec(1136262.58, 7589624.20, 93.56)
+        });
+
+        viewer.scene.addAnnotation(Vec(1401033.16, 7494786.55, -20.69), {
+            title: "Copenhagen",
+            cameraPosition: Vec(1399482.97, 7491649.83, 1826.39),
+            cameraTarget: Vec(1401033.16, 7494786.55, -125.69),
+            "actions": [{
+                icon: Potree.resourcePath + "/icons/profile.svg",
+                onclick: e => {
+                    viewer.setMaterial("Elevation");
+                    viewer.setElevationRange(-15, 40);
+                }
+            },
+            {
+                icon: "../resources/icons/rgb.png",
+                onclick: e => {
+                    viewer.setMaterial("RGB");
+                }
+            }]
+        });
+
+        $(".annotation").last().find("img").css("filter", "invert(0)");
+        $(".annotation-item").last().find("img").last().css("filter", "invert(0)");
+
+        viewer.scene.addAnnotation(Vec(1104310.06, 7769809.54, 200.55), {
+            title: "Aalborg",
+            cameraPosition: Vec(1102268.83, 7766927.66, 2365.70),
+            cameraTarget: Vec(1104310.06, 7769809.54, 133.55)
+        });
+
+        $("#menu_annotations").next().show();
+    </script>
   </body>
 </html>
 
