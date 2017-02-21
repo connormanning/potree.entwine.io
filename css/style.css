@@ -170,3 +170,12 @@ button.link {
 #renderer .docker-widget .fa { padding-top: 9px; }
 #renderer .target-location { margin-bottom: 0; }
 
+.flag {
+    vertical-align: top;
+    margin-top: 4px;
+    float: right;
+    width: 12px;
+    height: 8px;
+    margin-left: 8px;
+}
+

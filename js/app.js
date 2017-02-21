@@ -55,7 +55,7 @@ var Footer = React.createClass({
                                     <img
                                         className='center-block'
                                         id='footer-icon'
-                                        src='resources/images/icon.png'
+                                        src='resources/images/entwine-logo.png'
                                     />
                                 </a>
                             </div>
@@ -75,41 +75,54 @@ var Footer = React.createClass({
 var Thumb = React.createClass({
     render: function() {
         var r = this.props.resource;
-        return <a
-            href={ '/data/' + r.page + '.html' }
-            className='col-xs-6 col-sm-4'
-        >
+        var tooltip = r.locations.length == 2 ?
+            'Served from NA or EU' :
+            'Served from NA only';
+
+        var flags = r.locations.map((v) =>
             <img
-                className='img-responsive thumb img-thumbnail'
-                src={ 'resources/images/' + r.page + '.jpg' }
-            />
-            <p className='lead center-block'>{ r.name }</p>
-        </a>;
+                className='flag'
+                title={ tooltip }
+                src={ 'resources/icons/' + v + '.svg' }/>
+        );
+
+        return <div className='col-xs-6 col-sm-4'>
+            <a
+                href={ '/data/' + r.page + '.html' }
+            >
+                <img
+                    className='img-responsive thumb img-thumbnail'
+                    src={ 'resources/images/' + r.page + '.jpg' }
+                />
+            </a>
+            <p className='lead center-block'>{ r.name } { flags }</p>
+        </div>;
     }
 });
 
-var Resource = function(name, page) {
+var Resource = function(name, page, locations) {
     this.name = name;
     this.page = page;
+    this.locations = locations || ['na'];
 };
 
 var Page = React.createClass({
     render: function() {
+        var eu = ['eu', 'na'];
+
         var resources = [
             new Resource('Denmark', 'denmark'),
-            new Resource('Railway - France', 'sncf'),
-            new Resource('Red Rocks Amphitheatre', 'red-rocks'),
+            new Resource('Railway - France', 'sncf', eu),
+            new Resource('Red Rocks Amphitheatre', 'red-rocks', eu),
             new Resource('New Zealand', 'new-zealand'),
             new Resource('New York City', 'nyc'),
             new Resource('Iowa', 'iowa'),
-            new Resource('Lake Isabella', 'lake-isabella'),
-            new Resource('Autzen Stadium', 'autzen'),
-            new Resource('Vanuatu Village - Nepal', 'vanuatu-village'),
-            new Resource('Half Dome - Yosemite', 'half-dome'),
-            new Resource('Cedar Falls Bridge - Iowa', 'iowa-bridge'),
-            new Resource('Mount St. Helens', 'st-helens'),
-            // new Resource('Space Shuttle', 'shuttle'),
-            // new Resource('Lone Star Geyser', 'lone-star'),
+            new Resource('Lake Isabella', 'lake-isabella', eu),
+            new Resource('Autzen Stadium', 'autzen', eu),
+            new Resource('Vanuatu Village - Nepal', 'vanuatu-village', eu),
+            new Resource('Half Dome - Yosemite', 'half-dome', eu),
+            new Resource('Cedar Falls Bridge - Iowa', 'iowa-bridge', eu),
+            new Resource('Mount St. Helens', 'st-helens', eu)
         ];
 
         return <div>
