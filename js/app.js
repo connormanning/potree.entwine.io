@@ -111,7 +111,7 @@ var Page = React.createClass({
         var eu = ['eu', 'na'];
 
         var resources = [
-            new Resource('Denmark', 'denmark'),
+            new Resource('Denmark', 'denmark', eu),
             new Resource('Railway - France', 'sncf', eu),
             new Resource('Red Rocks Amphitheatre', 'red-rocks', eu),
             new Resource('New Zealand', 'new-zealand'),
