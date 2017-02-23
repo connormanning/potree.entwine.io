@@ -55,7 +55,7 @@ var Footer = React.createClass({
                                     <img
                                         className='center-block'
                                         id='footer-icon'
-                                        src='resources/images/icon.png'
+                                        src='resources/images/entwine-logo.png'
                                     />
                                 </a>
                             </div>
@@ -91,10 +91,13 @@ var Content = React.createClass({
             <div className='col-xs-12 col-sm-2'/>
             <div className='col-xs-12 col-sm-8'>
 <p>
-    This demo gallery demonstrates interconnectivity between the <a href='potree.org'>Potree</a> renderer and <a href='https://github.com/hobu/greyhound'>Greyhound</a>, which is a RESTful, LoD-based point cloud streaming server for <a href='https://github.com/connormanning/entwine'>Entwine</a>-indexed endpoints.
+    This demo gallery demonstrates interconnectivity between the <a href='potree.org'>Potree</a> renderer and <a href='https://github.com/hobu/greyhound'>Greyhound</a>, which is a point cloud streaming server for <a href='https://github.com/connormanning/entwine'>Entwine</a>-indexed endpoints.
 </p>
 <p>
-    This work was accomplished via collaboration by <a href='https://www.esciencecenter.nl/profile/maarten-van-meersbergen-msc'>Maarten van Meersbergen</a>, <a href='https://www.esciencecenter.nl/profile/oscar-martinez-rubi-msc'>Oscar Martinez Rubi</a>, and <a href='https://github.com/connormanning'>Connor Manning</a> during the <a href='https://wiki.osgeo.org/wiki/Paris_Code_Sprint_2016'>OSGeo Paris Code Sprint 2016</a>.
+    The integration between Potree and Greyhound was accomplished via collaboration by <a href='https://www.esciencecenter.nl/profile/maarten-van-meersbergen-msc'>Maarten van Meersbergen</a>, <a href='https://www.esciencecenter.nl/profile/oscar-martinez-rubi-msc'>Oscar Martinez Rubi</a>, and <a href='https://github.com/connormanning'>Connor Manning</a> during the <a href='https://wiki.osgeo.org/wiki/Paris_Code_Sprint_2016'>OSGeo Paris Code Sprint 2016</a>.
+</p>
+<p>
+    The source code for this repository is available on <a href='https://github.com/connormanning/potree.entwine.io'>GitHub</a>.
 </p>
             </div>
             <div className='col-xs-12 col-sm-2'/>
@@ -139,10 +142,12 @@ var Page = React.createClass({
                                 Data credits
                             </h3>
                             <div className='center-block'>
-                                <Credit
-                                    name='Autzen Stadium, St. Helens, Half Dome'
-                                >
-                                    Howard Butler, <a href="hobu.co">Hobu, Inc.</a>
+                                <Credit name='SNCF Railway'>
+                                    <a href='https://ressources.data.sncf.com/explore/dataset/nuage-points-3d/'>SNCF Open Data</a>
+                                </Credit>
+
+                                <Credit name='Denmark'>
+                                    <a href='http://kortforsyningen.dk/'>Kortforsyningen</a>
                                 </Credit>
 
                                 <Credit name='Red Rocks Amphitheatre'>
@@ -151,30 +156,23 @@ var Page = React.createClass({
                                     </a> sample data
                                 </Credit>
 
-                                <Credit name='Nepal'>
-                                    Vanuatu village, Nepal. <a href="http://www.globaldirt.org/">GlobalDIRT</a>
-                                </Credit>
-
                                 <Credit name='Lake Isabella'>
                                     David Finnegan, <a href="http://www.erdc.usace.army.mil/Locations/CRREL/Research.aspx">RS/GIS CRREL USACE</a>, 2015
+                                </Credit>
+
+                                <Credit
+                                    name='Autzen Stadium, St. Helens, Half Dome'
+                                >
+                                    Howard Butler, <a href="hobu.co">Hobu, Inc.</a>
+                                </Credit>
+
+                                <Credit name='Vanuatu Village, Nepal'>
+                                    <a href="http://www.globaldirt.org/">GlobalDIRT</a>
                                 </Credit>
 
                                 <Credit name='Iowa Bridge'>
                                     University Ave., Cedar Falls, IA - Iowa DOT
                                 </Credit>
-
-                                <Credit name='Lone Star Geyser'>
-                                    David Finnegan and Adam LeWinter, <a href="http://www.erdc.usace.army.mil/Locations/CRREL/Research.aspx">RS/GIS CRREL USACE</a>, 2015
-                                </Credit>
-
-                                <Credit name='Space Shuttle'>
-                                    The Smithsonian National Air and Space Museum, Steven F. Udvar-Hazy Center, and <a href="http://www.crrel.usace.army.mil/">RS/GIS CRREL USACE</a>
-                                </Credit>
-
-                                <Credit name='SNCF Railway'>
-                                    <a href='https://ressources.data.sncf.com/explore/dataset/nuage-points-3d/'>SNCF Open Data</a>
-                                </Credit>
-
                             </div>
                         </div>
                     </div>
