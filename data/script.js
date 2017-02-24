@@ -1,10 +1,18 @@
+var maybeParse = function(key, val) {
+    if (['s', 'server', 'r', 'resource'].includes(key) && val[0] != '"') {
+        return val;
+    }
+    return JSON.parse(val);
+};
+
 var getQueryParam = function(name) {
     name = name.replace(/[\[\]]/g, '\\$&');
     var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)');
     var results = regex.exec(window.location.href);
     if (!results) return null;
     if (!results[2]) return true;
-    return JSON.parse(decodeURIComponent(results[2].replace(/\+/g, ' ')));
+
+    return maybeParse(name, decodeURIComponent(results[2].replace(/\+/g, ' ')));
 }
 
 window.viewer = new Potree.Viewer(
@@ -189,7 +197,10 @@ var configure = () => {
             if (c.indexOf('=') == -1) set([decode(c)], true);
             else {
                 var keyVal = c.split('=');
-                set(decode(keyVal[0]), JSON.parse(decode(keyVal[1])));
+                var key = decode(keyVal[0]);
+                var val = maybeParse(key, decode(keyVal[1]));
+
+                set(key, val);
             }
         }, { });
     };
