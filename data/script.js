@@ -45,7 +45,7 @@ var maybe = (key, val) => {
     var d = getDefault(key);
 
     if (Array.isArray(val)) {
-        if (val.some((v, i) => v != d[i])) return val;
+        if (!d || val.some((v, i) => v != d[i])) return val;
         else return null;
     }
     return val != getDefault(key) ? val : null;
