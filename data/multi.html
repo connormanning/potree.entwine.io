@@ -17,12 +17,20 @@
   <body>
     <script type="text/javascript">
         window.config = {
-            resource: 'lake-isabella-z',
+            resource: 'iowa-z',
             material: 'Intensity',
+            intensityGamma: 0.5,
+            pointSize: 3,
+            edlStrength: .1,
             near: 50,
+            far: 100000000,
             pointBudget: 3.5 * 1000 * 1000,
-            position: [-13182747.80, 4250371.19, 9904.61],
-            target: [-13185214.55, 4254939.29, -5.37],
+            position: [-10425779.61, 4695910.56, 845119.01],
+            target: [-10493475.37, 5268520.64, 95421.95]
+
+            // Old Capitol:
+            // position: [-10189978.80, 5109956.30, 558.76],
+            // target: [-10189865.38, 5110394.33, 291.07],
         };
     </script>
 	<script src="../libs/jquery/jquery-3.1.1.min.js" type="text/javascript"></script>
@@ -72,7 +80,7 @@
         new Clipboard('#entwine_copy', { text: () => window.captureUrl() });
     </script>
 
-    <script type="text/javascript" src="script.js"></script>
+    <script type="text/javascript" src="multi.js"></script>
   </body>
 </html>
 

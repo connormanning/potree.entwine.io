@@ -17,12 +17,14 @@
   <body>
     <script type="text/javascript">
         window.config = {
-            resource: 'lake-isabella-z',
-            material: 'Intensity',
+            resource: 'ahn-z',
             near: 50,
-            pointBudget: 3.5 * 1000 * 1000,
-            position: [-13182747.80, 4250371.19, 9904.61],
-            target: [-13185214.55, 4254939.29, -5.37],
+            far: 100000000,
+            pointBudget: 4 * 1000 * 1000,
+            pos: [621133.52, 6530424.12, 379802.80],
+            target: [602256.63, 6778045.51, -52704.32],
+            material: 'Elevation',
+            elevationRange: [20, 120]
         };
     </script>
 	<script src="../libs/jquery/jquery-3.1.1.min.js" type="text/javascript"></script>
@@ -73,6 +75,38 @@
     </script>
 
     <script type="text/javascript" src="script.js"></script>
+    <script type="text/javascript">
+        var Vec = (x, y, z) => new THREE.Vector3(x, y, z);
+
+        viewer.scene.addAnnotation(Vec(545115.50, 6867792.34, 49.52), {
+            title: "Amsterdam",
+            cameraPosition: Vec(546731.67, 6864174.77, 3204.50),
+            cameraTarget: Vec(545296.63, 6866840.48, -565.82)
+        });
+
+        viewer.scene.addAnnotation(Vec(496378.92, 6785255.94, 57.52), {
+            title: "Rotterdam",
+            cameraPosition: Vec(495575.88, 6774648.64, 10153.43),
+            cameraTarget: Vec(495850.37, 6783038.56, -739.75)
+        });
+
+        viewer.scene.addAnnotation(Vec(479029.16, 6814653.70, 54.36), {
+            title: "The Hague",
+            cameraPosition: Vec(478657.69, 6809163.72, 6534.77),
+            cameraTarget: Vec(478868.23, 6813761.55, 67.95)
+        });
+
+        viewer.scene.addAnnotation(Vec(570179.94, 6816446.52, 61.59), {
+            title: "Utrecht",
+            cameraPosition: Vec(569555.54, 6813256.36, 1776.86),
+            cameraTarget: Vec(569542.33, 6815559.03, -99.55)
+        });
+
+        $(".annotation").last().find("img").css("filter", "invert(0)");
+        $(".annotation-item").last().find("img").last().css("filter", "invert(0)");
+
+        $("#menu_annotations").next().show();
+    </script>
   </body>
 </html>
 

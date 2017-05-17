@@ -1,7 +1,6 @@
 var maybeParse = function(key, val) {
-    if (['s', 'server', 'r', 'resource'].includes(key)) {
-        if (val[0] == '[') return JSON.parse(val);
-        if (val[0] != '"') return val;
+    if (['s', 'server', 'r', 'resource'].includes(key) && val[0] != '"') {
+        return val;
     }
     return JSON.parse(val);
 };
@@ -220,19 +219,18 @@ var server =
 
 // Only allow resource override if the config doesn't specify one - this avoids
 // things like /data/autzen.html?resource=half-dome
-var resources =
-    config.resource ||
-    getQueryParam('r') ||
-    getQueryParam('resource');
+var r1 = 'iowa-z';
+var r2 = 'mn-f';
 
-if (!Array.isArray(resources)) resources = [resources];
-
-if (!resources) throw new Error('No resource supplied');
+// if (!resource) throw new Error('No resource supplied');
 
 if (server.substring(0, protocol.length) != protocol) {
     server = protocol + server;
 }
 if (server.slice(-1) != '/') server = server + '/';
+
+var b1 = server + 'resource/' + r1 + '/';
+var b2 = server + 'resource/' + r2 + '/';
 
 viewer.loadGUI(() => {
     $('#menu_appearance').next().show();
@@ -243,37 +241,31 @@ viewer.loadGUI(() => {
 
 configure();
 
-var loaded = 0;
+// console.log('RE', resource);
 
-resources.forEach((resource) => {
-    console.log('Loading', resource);
-    var root = server + 'resource/' + resource + '/';
+Potree.loadPointCloud(b1, r1, (e) => {
+Potree.loadPointCloud(b2, r2, (f) => {
+    // console.log(e, f);
+    viewer.scene.addPointCloud(e.pointcloud);
+    viewer.scene.addPointCloud(f.pointcloud);
 
-    Potree.loadPointCloud(root, resource, (e) => {
-        console.log('Loaded', resource);
-        viewer.scene.addPointCloud(e.pointcloud);
-        console.log(e.pointcloud);
+    viewer.fitToScreen();
+    viewer.scene.camera.near = 10;
 
-        if (++loaded == resources.length) {
-            console.log('All point clouds loaded');
-            viewer.fitToScreen();
-            viewer.scene.camera.near = 10;
+    var elevObj = viewer.getElevationRange();
+    defaults.elevationRange = [elevObj.min, elevObj.max];
+    if (config.near) viewer.scene.camera.near = config.near;
+    if (config.far) viewer.scene.camera.far = config.far;
+    configure();
 
-            var elevObj = viewer.getElevationRange();
-            defaults.elevationRange = [elevObj.min, elevObj.max];
-            if (config.near) viewer.scene.camera.near = config.near;
-            if (config.far) viewer.scene.camera.far = config.far;
-            configure();
+    var q = '';
+    var s = getQueryParam('s') || getQueryParam('server');
+    var r = getQueryParam('r') || getQueryParam('resource');
+    if (s) q += '?s=' + JSON.stringify(s);
+    if (r) q += (q ? '&' : '?') + 'r=' + JSON.stringify(r);
 
-            var q = '';
-            var s = getQueryParam('s') || getQueryParam('server');
-            var r = getQueryParam('r') || getQueryParam('resource');
-            if (s) q += '?s=' + JSON.stringify(s);
-            if (r) q += (q ? '&' : '?') + 'r=' + JSON.stringify(r);
-
-            history.replaceState(null, null, location.pathname + q);
-        }
-    });
+    history.replaceState(null, null, location.pathname + q);
+});
 });
 
 window.captureUrl = () => {
