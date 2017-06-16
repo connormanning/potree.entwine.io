@@ -91,7 +91,7 @@ var Content = React.createClass({
             <div className='col-xs-12 col-sm-2'/>
             <div className='col-xs-12 col-sm-8'>
 <p>
-    This demo gallery demonstrates interconnectivity between the <a href='potree.org'>Potree</a> renderer and <a href='https://github.com/hobu/greyhound'>Greyhound</a>, which is a point cloud streaming server for <a href='https://github.com/connormanning/entwine'>Entwine</a>-indexed endpoints.
+    This demo gallery demonstrates interconnectivity between the <a href='http://potree.org'>Potree</a> renderer and <a href='https://github.com/hobu/greyhound'>Greyhound</a>, which is a point cloud streaming server for <a href='https://github.com/connormanning/entwine'>Entwine</a>-indexed endpoints.
 </p>
 <p>
     The integration between Potree and Greyhound was accomplished via collaboration by <a href='https://www.esciencecenter.nl/profile/maarten-van-meersbergen-msc'>Maarten van Meersbergen</a>, <a href='https://www.esciencecenter.nl/profile/oscar-martinez-rubi-msc'>Oscar Martinez Rubi</a>, and <a href='https://github.com/connormanning'>Connor Manning</a> during the <a href='https://wiki.osgeo.org/wiki/Paris_Code_Sprint_2016'>OSGeo Paris Code Sprint 2016</a>.
