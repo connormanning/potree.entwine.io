@@ -34,6 +34,7 @@ var defaults = {
     opacity: 1,
     rgbGamma: 1, rgbContrast: 0, rgbBrightness: 0,
     intensityGamma: 1, intensityContrast: 0, intensityBrightness: 0,
+    classificationFilter: []
 };
 
 var config = window.config;
@@ -50,6 +51,14 @@ var maybe = (key, val) => {
         else return null;
     }
     return val != getDefault(key) ? val : null;
+};
+
+var getClassificationFilters = () => {
+    var list = viewer.scene.pointclouds[0].material.classification;
+    return Object.keys(list).reduce((p, c, i) => {
+        if (c != 'DEFAULT' && !list[c].w) return p.concat(parseInt(c));
+        else return p;
+    }, []);
 };
 
 var get = () => {
@@ -75,6 +84,8 @@ var get = () => {
         ig: maybe('intensityGamma', viewer.getIntensityGamma()),
         ic: maybe('intensityContrast', viewer.getIntensityContrast()),
         ib: maybe('intensityBrightness', viewer.getIntensityBrightness()),
+
+        cf: maybe('classificationFilter', getClassificationFilters()),
 
         // Always include these.
         p: viewer.scene.view.position.toArray(),
@@ -169,6 +180,15 @@ var set = (k, v) => {
         case 'weightClassification': case 'wc':
             viewer.setWeightClassification(v);
             break;
+        case 'classificationFilter': case 'cf':
+            for (var i = 0; i < v.length; ++i) {
+                var c = document.getElementById('chkClassification_' + v[i]);
+                if (c) {
+                    c.checked = false;
+                    viewer.setClassificationVisibility(v[i], false);
+                }
+            }
+            break;
         case 'language': case 'l': case 'lang':
             viewer.setLanguage(v);
             break;
@@ -234,14 +254,23 @@ if (server.substring(0, protocol.length) != protocol) {
 }
 if (server.slice(-1) != '/') server = server + '/';
 
+var mobileRegex =
+    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
+
+if (mobileRegex.test(navigator.userAgent)) {
+    console.log('Using mobile settings');
+    config.pointBudget = 700000;
+    config.edl = false;
+}
+
 viewer.loadGUI(() => {
     $('#menu_appearance').next().show();
     if (config.debug || defaults.debug || getQueryParam('debug')) {
         viewer.toggleSidebar();
     }
-});
 
-configure();
+    configure();
+});
 
 var loaded = 0;
 
@@ -276,17 +305,20 @@ resources.forEach((resource) => {
     });
 });
 
-window.captureUrl = () => {
-    var state = get();
-    var keys = Object.keys(state);
-    var moveToFront = (k) => {
-        if (state[k]) keys = [k].concat(keys.filter((v) => v != k));
-    };
-    moveToFront('r');
-    moveToFront('s');
-    var q = keys.reduce((p, k) => {
-        return p + (p.length ? '&' : '?') + k + '=' + JSON.stringify(state[k]);
-    }, '');
-    return window.location.origin + window.location.pathname + q;
-};
+new Clipboard('#entwine_copy', {
+    text: function() {
+        var state = get();
+        var keys = Object.keys(state);
+        var moveToFront = function(k) {
+            if (state[k]) keys = [k].concat(keys.filter((v) => v != k));
+        };
+        moveToFront('r');
+        moveToFront('s');
+        var q = keys.reduce((p, k) => {
+            return p + (p.length ? '&' : '?') +
+                k + '=' + JSON.stringify(state[k]);
+        }, '');
+        return window.location.origin + window.location.pathname + encodeURI(q);
+    }
+});
 

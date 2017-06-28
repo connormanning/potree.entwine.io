@@ -120,6 +120,7 @@ var Page = React.createClass({
             new Resource('Lake Isabella', 'lake-isabella', eu),
             new Resource('Washington DC', 'dc'),
             new Resource('Netherlands', 'ahn'),
+            new Resource('Minnesota', 'mn'),
             new Resource('Autzen Stadium', 'autzen', eu),
             new Resource('Vanuatu Village - Nepal', 'vanuatu-village', eu),
             new Resource('Half Dome - Yosemite', 'half-dome', eu),
