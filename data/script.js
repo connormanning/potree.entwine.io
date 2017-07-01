@@ -270,6 +270,49 @@ viewer.loadGUI(() => {
     }
 
     configure();
+
+    // Update material pane - e.g. add gamma for RGB or sliders for elevation.
+    var selectedValue = viewer.getMaterialName();
+
+    let blockWeights = $("#materials\\.composite_weight_container");
+    let blockElevation = $("#materials\\.elevation_container");
+    let blockRGB = $("#materials\\.rgb_container");
+    let blockIntensity = $("#materials\\.intensity_container");
+    let blockTransition = $("#materials\\.transition_container");
+
+    blockIntensity.css("display", "none");
+    blockElevation.css("display", "none");
+    blockRGB.css("display", "none");
+    blockWeights.css("display", "none");
+    blockTransition.css("display", "none");
+
+    if(selectedValue === "Composite"){
+        blockWeights.css("display", "block");
+        blockElevation.css("display", "block");
+        blockRGB.css("display", "block");
+        blockIntensity.css("display", "block");
+    }
+
+    if(selectedValue === "Elevation"){
+        blockElevation.css("display", "block");
+    }
+
+    if(selectedValue === "RGB and Elevation"){
+        blockRGB.css("display", "block");
+        blockElevation.css("display", "block");
+    }
+
+    if(selectedValue === "RGB"){
+        blockRGB.css("display", "block");
+    }
+
+    if(selectedValue === "Intensity"){
+        blockIntensity.css("display", "block");
+    }
+
+    if(selectedValue === "Intensity Gradient"){
+        blockIntensity.css("display", "block");
+    }
 });
 
 var loaded = 0;
