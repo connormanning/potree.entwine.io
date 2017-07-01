@@ -1763,18 +1763,13 @@ Potree.POCLoader.load = function load(url, callback) {
 					tightBoundingBox.max.copy(new THREE.Vector3(fMno.tightBoundingBox.ux, fMno.tightBoundingBox.uy, fMno.tightBoundingBox.uz));
 				}
 
-				//var offset = new THREE.Vector3(0,0,0);
-				//offset.set(-min.x, -min.y, -min.z);
 				let offset = min.clone();
-
-				// for precision problem presentation purposes
-				//offset.set(50000*1000,0,0);
 
 				boundingBox.min.sub(offset);
 				boundingBox.max.sub(offset);
 
-				tightBoundingBox.min.add(offset);
-				tightBoundingBox.max.add(offset);
+				tightBoundingBox.min.sub(offset);
+				tightBoundingBox.max.sub(offset);
 
 				pco.projection = fMno.projection;
 				pco.boundingBox = boundingBox;
@@ -2274,7 +2269,8 @@ Potree.GreyhoundBinaryLoader.prototype.parse = function(node, buffer){
 						//console.log(fb);
                         break;
                     case pointAttributes.COLOR_PACKED:
-                        addAttribute('color', buffer, 3);
+						geometry.addAttribute("color",
+							new THREE.BufferAttribute(new Uint8Array(buffer), 3, true));
                         break;
                     case pointAttributes.INTENSITY:
                         addAttribute('intensity', buffer, 1);
@@ -2575,6 +2571,10 @@ Potree.GreyhoundLoader.load = function load(url, callback) {
                 new THREE.Vector3().fromArray(bounds, 0),
                 new THREE.Vector3().fromArray(bounds, 3));
 
+            var tightBoundingBox = new THREE.Box3(
+                new THREE.Vector3().fromArray(boundsConforming, 0),
+                new THREE.Vector3().fromArray(boundsConforming, 3));
+
             var offset = boundingBox.min.clone();
 
             boundingBox.max.sub(boundingBox.min);
@@ -2583,13 +2583,18 @@ Potree.GreyhoundLoader.load = function load(url, callback) {
             pgg.projection = greyhoundInfo.srs;
             pgg.boundingBox = boundingBox;
             pgg.boundingSphere = boundingBox.getBoundingSphere();
+            pgg.tightBoundingBox = tightBoundingBox.clone();
 
             pgg.scale = scale;
             pgg.offset = offset;
 
+            pgg.tightBoundingBox.min.sub(offset);
+            pgg.tightBoundingBox.max.sub(offset);
+
             console.log('Scale:', scale);
             console.log('Offset:', offset);
             console.log('Bounds:', boundingBox);
+            console.log('Tight bounds:', tightBoundingBox);
 
             pgg.loader = new Potree.GreyhoundBinaryLoader(
                     version, boundingBox, pgg.scale);
@@ -6008,13 +6013,17 @@ Potree.Annotation = function(scene, args = {}){
 	this.title = args.title || "No Title";
 	this.description = args.description || "";
 	this.position = args.position || new THREE.Vector3(0,0,0);
-	this.cameraPosition = args.cameraPosition;
-	this.cameraTarget = args.cameraTarget;
+	this.cameraPosition = (args.cameraPosition instanceof Array) ?
+		new THREE.Vector3().fromArray(args.cameraPosition) : args.cameraPosition;
+	this.cameraTarget = (args.cameraTarget instanceof Array) ?
+		new THREE.Vector3().fromArray(args.cameraTarget) : args.cameraTarget;
 	this.view = args.view || null;
 	this.keepOpen = false;
 	this.descriptionVisible = false;
+	this.showDescription = true;
 	this.actions = args.actions || [];
 	this.appearance = args.appearance || null;
+	this.isHighlighted = false;
 
 	this.domElement = document.createElement("div");
 	this.domElement.style.position = "absolute";
@@ -6106,18 +6115,51 @@ Potree.Annotation = function(scene, args = {}){
 		}
 	}
 
-	this.elDescriptionText = document.createElement("span");
-	this.elDescriptionText.style.color = "#ffffff";
-	this.elDescriptionText.innerHTML = this.description;
-	this.domDescription.appendChild(this.elDescriptionText);
+	{
+		let icon = Potree.resourcePath + "/icons/close.svg";
+		let close = $(`<span><img src="${icon}" width="16px"></span>`);
+		close.css("filter", "invert(100%)");
+		close.css("float", "right");
+		close.css("opacity", "0.5");
+		close.css("margin", "0px 0px 8px 8px");
+		close.hover(e => {
+			close.css("opacity", "1");
+		},e => {
+			close.css("opacity", "0.5");
+		});
+		close.click(e => {
+			this.setHighlighted(false);
+		});
+		$(this.domDescription).append(close);
+
+		this.elDescriptionText = document.createElement("span");
+		this.elDescriptionText.style.color = "#ffffff";
+		this.elDescriptionText.innerHTML = this.description;
+		this.domDescription.appendChild(this.elDescriptionText);
+
+	}
 
 	this.domElement.onmouseenter = () => {
 		this.setHighlighted(true);
 	};
 
+	$(this.domElement).on("touchstart", e => {
+		this.setHighlighted(!this.isHighlighted);
+	});
+
 	this.domElement.onmouseleave = () => {
 		this.setHighlighted(false);
 	};
+
+	//$(this.domElement).click(e => {
+	//	this.showDescription = !this.showDescription;
+	//
+	//	if(this.showDescription){
+	//		$(this.domElement).append($(this.domDescription));
+	//	}else{
+	//		$(this.domDescription).remove();
+	//	}
+	//});
 
 	this.setHighlighted = function(highlighted){
 		if(highlighted){
@@ -6135,9 +6177,11 @@ Potree.Annotation = function(scene, args = {}){
 			this.domElement.style.opacity = "0.5";
 			this.elOrdinal.style.boxShadow = "";
 			this.domElement.style.zIndex = "100";
-			this.descriptionVisible = true;
+			this.descriptionVisible = false;
 			this.domDescription.style.display = "none";
 		}
+
+		this.isHighlighted = highlighted;
 	};
 
 	this.hasView = function(){
@@ -6356,6 +6400,7 @@ Potree.ProfileRequest = function(pointcloud, profile, maxDepth, callback){
 					this.traverse(node);
 				}
 			}else{
+				console.log("loading " + node.name);
 				node.load();
 				this.priorityQueue.push(element);
 			}
@@ -8544,7 +8589,7 @@ Potree.Features = function(){
 
 				var supported = true;
 
-				//supported = supported && gl.getExtension("EXT_frag_depth");
+				supported = supported && gl.getExtension("EXT_frag_depth");
 				supported = supported && gl.getExtension("OES_texture_float");
 				supported = supported && gl.getParameter(gl.MAX_VARYING_VECTORS) >= 8;
 
@@ -11530,8 +11575,6 @@ Potree.PointCloudArena4D.prototype.pick = function(renderer, camera, ray, params
 	}
 	this.pickTarget.setSize(width, height);
 
-
-
 	gl.enable(gl.SCISSOR_TEST);
 	gl.scissor(pixelPos.x - (pickWindowSize - 1) / 2, pixelPos.y - (pickWindowSize - 1) / 2,pickWindowSize,pickWindowSize);
 	gl.disable(gl.SCISSOR_TEST);
@@ -11682,6 +11725,23 @@ Potree.PointCloudArena4D.prototype.pick = function(renderer, camera, ray, params
 	//
 	//	var w = window.open();
 	//	w.document.write('<img src="'+screenshot+'"/>');
+	//}
+
+
+	//{ // show big render target for debugging purposes
+	//	var br = new ArrayBuffer(width*height*4);
+	//	var bp = new Uint8Array(br);
+	//	renderer.context.readPixels( 0, 0, width, height,
+	//		renderer.context.RGBA, renderer.context.UNSIGNED_BYTE, bp);
+	//
+	//	var img = pixelsArrayToImage(bp, width, height);
+	//	img.style.boder = "2px solid red";
+	//	img.style.position = "absolute";
+	//	img.style.top  = "0px";
+	//	img.style.width = width + "px";
+	//	img.style.height = height + "px";
+	//	img.onclick = function(){document.body.removeChild(img)};
+	//	document.body.appendChild(img);
 	//}
 
 	// find closest hit inside pixelWindow boundaries
@@ -11957,6 +12017,7 @@ Potree.PointCloudArena4DGeometryNode.prototype.load = function(){
 		geometry.boundingSphere = scope.boundingSphere;
 
 		scope.numPoints = numPoints;
+
 		scope.loading = false;
 	};
 
@@ -12589,7 +12650,12 @@ Potree.Scene = class extends THREE.EventDispatcher{
 	}
 
 	addAnnotation(position, args = {}){
-		args.position = position;
+		if(position instanceof Array){
+			args.position = new THREE.Vector3().fromArray(position);
+		}else if(position instanceof THREE.Vector3){
+			args.position = position;
+		}
+
 
 		if(!args.cameraTarget){
 			args.cameraTarget = position;
@@ -13472,24 +13538,21 @@ Potree.Viewer = class PotreeViewer extends THREE.EventDispatcher{
 
 			pointcloud.updateMatrixWorld(true);
 
-			var boxWorld = Potree.utils.computeTransformedBoundingBox(pointcloud.boundingBox, pointcloud.matrixWorld)
+			let pointcloudBox = pointcloud.pcoGeometry.tightBoundingBox ?  pointcloud.pcoGeometry.tightBoundingBox : pointcloud.boundingBox;
+			var boxWorld = Potree.utils.computeTransformedBoundingBox(pointcloudBox, pointcloud.matrixWorld)
 			box.union(boxWorld);
 		}
 
 		return box;
 	};
 
-	fitToScreen(){
+	fitToScreen(factor = 1){
 		var box = this.getBoundingBox(this.scene.pointclouds);
-
-		//if(this.transformationTool && this.transformationTool.selection.length > 0){
-		//	box = this.transformationTool.getBoundingBox();
-		//}
 
 		var node = new THREE.Object3D();
 		node.boundingBox = box;
 
-		this.zoomTo(node, 1);
+		this.zoomTo(node, factor);
 	};
 
 	setTopView(){
@@ -13733,7 +13796,7 @@ Potree.Viewer = class PotreeViewer extends THREE.EventDispatcher{
 
 			i18n.init({
 				lng: 'en',
-				resGetPath: '../resources/lang/__lng__/__ns__.json',
+				resGetPath: Potree.resourcePath + '/lang/__lng__/__ns__.json',
 				preload: ['en', 'fr', 'de'],
 				getAsync: true,
 				debug: false
@@ -13744,8 +13807,6 @@ Potree.Viewer = class PotreeViewer extends THREE.EventDispatcher{
 
 			$(function() {
 				initSidebar();
-
-
 			});
 
 			let elProfile = $('<div>').load(new URL(Potree.scriptPath + "/profile.html").href, () => {
@@ -13753,7 +13814,7 @@ Potree.Viewer = class PotreeViewer extends THREE.EventDispatcher{
 				this._2dprofile = new Potree.Viewer.Profile(this, document.getElementById("profile_draw_container"));
 
 				if(callback){
-					callback();
+					$(callback);
 				}
 			});
 
@@ -13914,6 +13975,8 @@ Potree.Viewer = class PotreeViewer extends THREE.EventDispatcher{
 			visibleNodes = result.visibleNodes.length;
 			visiblePoints = result.numVisiblePoints;
 			camera.near = result.lowestSpacing * 10.0;
+			camera.far = -this.getBoundingBox().applyMatrix4(camera.matrixWorldInverse).min.z;
+			camera.far = Math.max(camera.far * 1.5, 1000);
 		}
 
 
@@ -14848,6 +14911,8 @@ Potree.Viewer.Profile = class ProfileWindow{
 		this.maximized = false;
 		this.threshold = 20*1000;
 
+		this.scheduledDraw = null;
+
 		$('#closeProfileContainer').click(() => {
 			this.hide();
 			this.enabled = false;
@@ -14863,21 +14928,17 @@ Potree.Viewer.Profile = class ProfileWindow{
 			}
 		});
 
-		this.drawOnChange = (event) => {
-			this.redraw();
+		//this.drawOnChange = (event) => {
+		//	this.redraw();
+		//};
+
+		this.redraw = () => {
+			if(this.currentProfile){
+				this.draw(this.currentProfile);
+			}
 		};
 
-		//viewer.scene.addEventListener("marker_moved"))
-
-		//viewer.profileTool.addEventListener("marker_moved", drawOnChange);
-		//viewer.profileTool.addEventListener("width_changed", drawOnChange);
-		//viewer.addEventListener("material_changed", function(){
-		//	drawOnChange({profile: this.currentProfile});
-		//});
-		//
-		//viewer.addEventListener("height_range_changed", function(){
-		//	drawOnChange({profile: this.currentProfile});
-		//});
+		viewer.addEventListener("height_range_changed", this.redraw);
 
 		let width = document.getElementById('profile_window').clientWidth;
 		let height = document.getElementById('profile_window').clientHeight;
@@ -14888,7 +14949,7 @@ Potree.Viewer.Profile = class ProfileWindow{
 			let newHeight = document.getElementById('profile_window').clientHeight;
 
 			if(newWidth !== width || newHeight !== height){
-				setTimeout(this.drawOnChange, 50, {profile: this.currentProfile});
+				setTimeout(this.redraw, 50, {profile: this.currentProfile});
 			}
 
 			width = newWidth;
@@ -15083,11 +15144,14 @@ Potree.Viewer.Profile = class ProfileWindow{
 	strokeColor(d){
 		let material = this.viewer.getMaterial();
 		if (material === Potree.PointColorType.RGB) {
-			//return d.color;
-			return 'rgb(' + (d.color[0] * 100 / 255) + '%,' + (d.color[1] * 100 / 255) + '%,' + (d.color[2] * 100 / 255) + '%)';
+			let [r, g, b] = d.color.map(e => parseInt(e));
+
+			return `rgb( ${r}, ${g}, ${b})`;
 		} else if (material === Potree.PointColorType.INTENSITY) {
-			//return d.intensity;
-			return 'rgb(' + d.intensity + '%,' + d.intensity + '%,' + d.intensity + '%)';
+			let irange = viewer.getIntensityRange();
+			let i = parseInt(255 * (d.intensity - irange[0]) / (irange[1] - irange[0]));
+
+			return `rgb(${i}, ${i}, ${i})`;
 		} else if (material === Potree.PointColorType.CLASSIFICATION) {
 			let classif = this.viewer.scene.pointclouds[0].material.classification;
 			if (typeof classif[d.classification] != 'undefined'){
@@ -15120,13 +15184,7 @@ Potree.Viewer.Profile = class ProfileWindow{
 		}
 	}
 
-	redraw(){
-		this.draw(this.currentProfile);
-	}
-
 	draw(profile){
-		// TODO are the used closures safe for garbage collection?
-
 		if(!this.enabled){
 			return;
 		}
@@ -15139,6 +15197,22 @@ Potree.Viewer.Profile = class ProfileWindow{
 			return;
 		}
 
+		// avoid too many expensive draws/redraws
+		// 2d profile draws don't need frame-by-frame granularity, it's
+		// fine to handle a redraw once every 100ms
+		let executeScheduledDraw = () => {
+			this.actuallyDraw(this.scheduledDraw);
+			this.scheduledDraw = null;
+		};
+
+		if(!this.scheduledDraw){
+			setTimeout(executeScheduledDraw, 100);
+		}
+		this.scheduledDraw = profile;
+	}
+
+	actuallyDraw(profile){
+
 		if(this.context){
 			let containerWidth = this.element.clientWidth;
 			let containerHeight = this.element.clientHeight;
@@ -15149,36 +15223,26 @@ Potree.Viewer.Profile = class ProfileWindow{
 		}
 
 		if(this.currentProfile){
-			this.currentProfile.removeEventListener("marker_moved", this.drawOnChange);
-			this.currentProfile.removeEventListener("marker_added", this.drawOnChange);
-			this.currentProfile.removeEventListener("marker_removed", this.drawOnChange);
-			this.currentProfile.removeEventListener("width_changed", this.drawOnChange);
-			viewer.removeEventListener("material_changed", this.drawOnChange);
-			//viewer.addEventListener("material_changed", function(){
-			//	drawOnChange({profile: this.currentProfile});
-			//});
-
-
-			//viewer.profileTool.addEventListener("marker_moved", drawOnChange);
-			//viewer.profileTool.addEventListener("width_changed", drawOnChange);
-			//viewer.addEventListener("material_changed", function(){
-			//	drawOnChange({profile: this.currentProfile});
-			//});
-            //
-			//viewer.addEventListener("height_range_changed", function(){
-			//	drawOnChange({profile: this.currentProfile});
-			//});
+			this.currentProfile.removeEventListener("marker_moved", this.redraw);
+			this.currentProfile.removeEventListener("marker_added", this.redraw);
+			this.currentProfile.removeEventListener("marker_removed", this.redraw);
+			this.currentProfile.removeEventListener("width_changed", this.redraw);
+			viewer.removeEventListener("material_changed", this.redraw);
+			viewer.removeEventListener("height_range_changed", this.redraw);
+			viewer.removeEventListener("intensity_range_changed", this.redraw);
 		}
 
 
 		this.currentProfile = profile;
 
 		{
-			this.currentProfile.addEventListener("marker_moved", this.drawOnChange);
-			this.currentProfile.addEventListener("marker_added", this.drawOnChange);
-			this.currentProfile.addEventListener("marker_removed", this.drawOnChange);
-			this.currentProfile.addEventListener("width_changed", this.drawOnChange);
-			viewer.addEventListener("material_changed", this.drawOnChange);
+			this.currentProfile.addEventListener("marker_moved", this.redraw);
+			this.currentProfile.addEventListener("marker_added", this.redraw);
+			this.currentProfile.addEventListener("marker_removed", this.redraw);
+			this.currentProfile.addEventListener("width_changed", this.redraw);
+			viewer.addEventListener("material_changed", this.redraw);
+			viewer.addEventListener("height_range_changed", this.redraw);
+			viewer.addEventListener("intensity_range_changed", this.redraw);
 		}
 
 		if(!this.__drawData){
@@ -17653,6 +17717,7 @@ let initSidebar = function(){
 	$('#potree_version_number').html(Potree.version.major + "." + Potree.version.minor + Potree.version.suffix);
 	$('.perfect_scrollbar').perfectScrollbar();
 }
+
 class HoverMenuItem{
 
 	constructor(icon, callback){

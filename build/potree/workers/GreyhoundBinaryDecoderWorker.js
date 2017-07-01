@@ -171,10 +171,10 @@ onmessage = function(event){
 
 		}else if(pointAttribute.name === Potree.PointAttribute.COLOR_PACKED.name){
 
-			var buff = new ArrayBuffer(numPoints*4*3);
-			var colors = new Float32Array(buff);
+			var buff = new ArrayBuffer(numPoints*3);
+			var colors = new Uint8Array(buff);
 
-            var div = event.data.normalize.color ? 65535 : 255;
+            var div = event.data.normalize.color ? 256 : 1;
 
 			for(var j = 0; j < numPoints; ++j){
 				colors[3*j+0] = cv.getUint16(offset + j*pointSize + 0) / div;
@@ -191,9 +191,9 @@ onmessage = function(event){
 
 			for(var j = 0; j < numPoints; ++j){
 				var intensity = cv.getUint16(offset + j*pointSize);
-                if (event.data.normalize.intensity) {
-                    intensity = Math.floor(intensity / 256);
-                }
+                //if (event.data.normalize.intensity) {
+                //    intensity = Math.floor(intensity / 256);
+                //}
 				intensities[j] = intensity;
 			}
 
