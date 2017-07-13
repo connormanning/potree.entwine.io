@@ -160,6 +160,10 @@ var Page = React.createClass({
                                     David Finnegan, <a href="http://www.erdc.usace.army.mil/Locations/CRREL/Research.aspx">RS/GIS CRREL USACE</a>, 2015
                                 </Credit>
 
+                                <Credit name='Dublin'>
+                                    NYU Research Data, <a href="https://geo.nyu.edu/catalog?f%5Bdct_isPartOf_sm%5D%5B%5D=2015+Dublin+LiDAR">2015 Survey of Dublin City</a>
+                                </Credit>
+
                                 <Credit
                                     name='Autzen Stadium, St. Helens, Half Dome'
                                 >

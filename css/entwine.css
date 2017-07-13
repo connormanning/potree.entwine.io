@@ -75,3 +75,16 @@
     font-family: Helvetica, Arial, Sans-Serif;
 }
 
+#entwine_toggle {
+    max-width: 48px;
+    position: absolute;
+    right: 14px;
+    bottom: 124px;
+    z-index: 99999;
+    cursor: pointer;
+}
+
+.display_none {
+    display: none !important;
+}
+

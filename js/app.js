@@ -123,6 +123,7 @@ var Page = React.createClass({
             new Resource('Minnesota', 'mn'),
             new Resource('Autzen Stadium', 'autzen', eu),
             new Resource('Vanuatu Village - Nepal', 'vanuatu-village', eu),
+            new Resource('Dublin', 'dublin', eu),
             new Resource('Half Dome - Yosemite', 'half-dome', eu),
             new Resource('Cedar Falls Bridge - Iowa', 'iowa-bridge', eu),
             new Resource('Mount St. Helens', 'st-helens', eu)

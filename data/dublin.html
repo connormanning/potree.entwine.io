@@ -17,12 +17,18 @@
   <body>
     <script type="text/javascript">
         window.config = {
-            resource: 'dk-z',
+            resource: 'dublin',
+            material: 'Elevation',
+            elevationRange: [-15, 60],
+            fov: 60,
+            intensityGamma: 0.7,
+            pointSize: 2.6,
+            edlStrength: 0.7,
             near: 50,
             far: 100000000,
-            pointBudget: 4 * 1000 * 1000,
-            pos: [1136220.33, 7586586.50, 1489.39],
-            target: [1135212.36, 7589344.25, -513.09],
+            pointBudget: 4.5 * 1000 * 1000,
+            pos: [-696268.18, 7044252.17, 2295.21],
+            target: [-696398.37, 7046733.65, -803.78]
         };
     </script>
 	<script src="../libs/jquery/jquery-3.1.1.min.js" type="text/javascript"></script>
@@ -78,38 +84,40 @@
     <script type="text/javascript">
         var Vec = (x, y, z) => new THREE.Vector3(x, y, z);
 
-        viewer.scene.addAnnotation(Vec(1136415.91, 7589743.28, 80.25), {
-            title: "Aarhus",
-            cameraPosition: Vec(1134090.90, 7587109.09, 1842.13),
-            cameraTarget: Vec(1136262.58, 7589624.20, 93.56)
+        viewer.scene.addAnnotation(Vec(-695997.87, 7047632.67, 2.99), {
+            title: "The Custom House",
+            cameraPosition: Vec(-695721.06, 7047420.19, 99.04),
+            cameraTarget: Vec(-695995.47, 7047667.75, 28.84)
         });
 
-        viewer.scene.addAnnotation(Vec(1401033.16, 7494786.55, -20.69), {
-            title: "Copenhagen",
-            cameraPosition: Vec(1399482.97, 7491649.83, 1826.39),
-            cameraTarget: Vec(1401033.16, 7494786.55, -125.69),
-            "actions": [{
-                icon: Potree.resourcePath + "/icons/profile.svg",
-                onclick: e => {
-                    viewer.setMaterial("Elevation");
-                    viewer.setElevationRange(-15, 40);
-                }
-            },
-            {
-                icon: "../resources/icons/rgb.png",
-                onclick: e => {
-                    viewer.setMaterial("RGB");
-                }
-            }]
+        viewer.scene.addAnnotation(Vec(-697094.65, 7047264.04, 7.46), {
+            title: "Ha'penny Bridge",
+            cameraPosition: Vec(-697101.78, 7047225.94, 11.60),
+            cameraTarget: Vec(-697092.83, 7047254.90, 1.50)
         });
 
-        $(".annotation").last().find("img").css("filter", "invert(0)");
-        $(".annotation-item").last().find("img").last().css("filter", "invert(0)");
+        viewer.scene.addAnnotation(Vec(-698111.68, 7046015.04, 8.01), {
+            title: "St. Patrick's Cathedral",
+            cameraPosition: Vec(-698155.94, 7045960.32, 76.73),
+            cameraTarget: Vec(-698056.26, 7046021.12, 22.91)
+        });
 
-        viewer.scene.addAnnotation(Vec(1104310.06, 7769809.54, 200.55), {
-            title: "Aalborg",
-            cameraPosition: Vec(1102268.83, 7766927.66, 2365.70),
-            cameraTarget: Vec(1104310.06, 7769809.54, 133.55)
+        viewer.scene.addAnnotation(Vec(-696811.10, 7046029.84, 21.18), {
+            title: "Fusiliers' Arch",
+            cameraPosition: Vec(-696827.48, 7045943.42, 34.72),
+            cameraTarget: Vec(-696811.57, 7046046.56, 32.19)
+        });
+
+        viewer.scene.addAnnotation(Vec(-697608.59, 7046697.34, 11.19), {
+            title: "Dublin Castle",
+            cameraPosition: Vec(-697334.19, 7046525.17, 123.09),
+            cameraTarget: Vec(-697484.43, 7046605.17, 55.82)
+        });
+
+        viewer.scene.addAnnotation(Vec(-698241.35, 7047147.11, 4.89), {
+            title: "The Four Courts",
+            cameraPosition: Vec(-698516.75, 7047163.64, 123.41),
+            cameraTarget: Vec(-698240.92, 7047180.46, 20.85)
         });
 
         $("#menu_annotations").next().show();

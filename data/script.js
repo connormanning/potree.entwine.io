@@ -263,57 +263,67 @@ if (mobileRegex.test(navigator.userAgent)) {
     config.edl = false;
 }
 
-viewer.loadGUI(() => {
-    $('#menu_appearance').next().show();
-    if (config.debug || defaults.debug || getQueryParam('debug')) {
-        viewer.toggleSidebar();
-    }
+var init = () => {
+    viewer.loadGUI(() => {
+        $('#menu_appearance').next().show();
+        if (config.debug || defaults.debug || getQueryParam('debug')) {
+            viewer.toggleSidebar();
+        }
 
-    configure();
+        configure();
 
-    // Update material pane - e.g. add gamma for RGB or sliders for elevation.
-    var selectedValue = viewer.getMaterialName();
+        // Update material pane - e.g. add gamma for RGB or sliders for elevation.
+        var selectedValue = viewer.getMaterialName();
 
-    let blockWeights = $("#materials\\.composite_weight_container");
-    let blockElevation = $("#materials\\.elevation_container");
-    let blockRGB = $("#materials\\.rgb_container");
-    let blockIntensity = $("#materials\\.intensity_container");
-    let blockTransition = $("#materials\\.transition_container");
+        let blockWeights = $("#materials\\.composite_weight_container");
+        let blockElevation = $("#materials\\.elevation_container");
+        let blockRGB = $("#materials\\.rgb_container");
+        let blockIntensity = $("#materials\\.intensity_container");
+        let blockTransition = $("#materials\\.transition_container");
 
-    blockIntensity.css("display", "none");
-    blockElevation.css("display", "none");
-    blockRGB.css("display", "none");
-    blockWeights.css("display", "none");
-    blockTransition.css("display", "none");
+        blockIntensity.css("display", "none");
+        blockElevation.css("display", "none");
+        blockRGB.css("display", "none");
+        blockWeights.css("display", "none");
+        blockTransition.css("display", "none");
 
-    if(selectedValue === "Composite"){
-        blockWeights.css("display", "block");
-        blockElevation.css("display", "block");
-        blockRGB.css("display", "block");
-        blockIntensity.css("display", "block");
-    }
+        if (selectedValue === "Composite") {
+            blockWeights.css("display", "block");
+            blockElevation.css("display", "block");
+            blockRGB.css("display", "block");
+            blockIntensity.css("display", "block");
+        }
 
-    if(selectedValue === "Elevation"){
-        blockElevation.css("display", "block");
-    }
+        if (selectedValue === "Elevation") {
+            blockElevation.css("display", "block");
+        }
 
-    if(selectedValue === "RGB and Elevation"){
-        blockRGB.css("display", "block");
-        blockElevation.css("display", "block");
-    }
+        if (selectedValue === "RGB and Elevation") {
+            blockRGB.css("display", "block");
+            blockElevation.css("display", "block");
+        }
 
-    if(selectedValue === "RGB"){
-        blockRGB.css("display", "block");
-    }
+        if (selectedValue === "RGB") {
+            blockRGB.css("display", "block");
+        }
 
-    if(selectedValue === "Intensity"){
-        blockIntensity.css("display", "block");
-    }
+        if (selectedValue === "Intensity") {
+            blockIntensity.css("display", "block");
+        }
 
-    if(selectedValue === "Intensity Gradient"){
-        blockIntensity.css("display", "block");
-    }
-});
+        if (selectedValue === "Intensity Gradient") {
+            blockIntensity.css("display", "block");
+        }
+
+        var q = '';
+        var s = getQueryParam('s') || getQueryParam('server');
+        var r = getQueryParam('r') || getQueryParam('resource');
+        if (s) q += '?s=' + JSON.stringify(s);
+        if (r) q += (q ? '&' : '?') + 'r=' + JSON.stringify(r);
+
+        history.replaceState(null, null, location.pathname + q);
+    });
+};
 
 var loaded = 0;
 
@@ -335,18 +345,27 @@ resources.forEach((resource) => {
             defaults.elevationRange = [elevObj.min, elevObj.max];
             if (config.near) viewer.scene.camera.near = config.near;
             if (config.far) viewer.scene.camera.far = config.far;
-            configure();
 
-            var q = '';
-            var s = getQueryParam('s') || getQueryParam('server');
-            var r = getQueryParam('r') || getQueryParam('resource');
-            if (s) q += '?s=' + JSON.stringify(s);
-            if (r) q += (q ? '&' : '?') + 'r=' + JSON.stringify(r);
-
-            history.replaceState(null, null, location.pathname + q);
+            init();
         }
     });
 });
+
+window.toggleAnnotations = () => {
+    var el = $('#entwine_toggle');
+    var turningOn = el.attr('state') == 'off';
+
+    if (turningOn) {
+        $('.annotation').each(function() { $(this).removeClass('display_none') })
+        el.attr('state', 'on');
+        el.attr('src', '/resources/icons/entwine-annotations-on.svg');
+    }
+    else {
+        $('.annotation').each(function() { $(this).addClass('display_none') })
+        el.attr('state', 'off');
+        el.attr('src', '/resources/icons/entwine-annotations-off.svg');
+    }
+}
 
 new Clipboard('#entwine_copy', {
     text: function() {
