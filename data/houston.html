@@ -17,22 +17,29 @@
   <body>
     <script type="text/javascript">
         window.config = {
-            resource: 'iowa-z',
-            material: 'Intensity',
-            intensityGamma: 0.5,
-            pointSize: 3,
+            // resource: 'houston-15N',
+
+            server: 'aws.greyhound.io',
+            resource: 'houston',
+
+            material: 'Elevation',
+            elevationRange: [-50, 225],
+            classificationFilter: [7],
+            pointSize: 2,
             edlStrength: .1,
+            fov: 80,
             near: 50,
             far: 100000000,
-            pointBudget: 3.5 * 1000 * 1000,
-            position: [-10347222.90, 4779799.24, 420842.48],
-            target: [-10387613.91, 5121449.91, -26468.02],
-
-            // Old Capitol:
-            // position: [-10189978.80, 5109956.30, 558.76],
-            // target: [-10189865.38, 5110394.33, 291.07],
-
-            // http://potree.entwine.io/data/iowa.html?ps=2.49&pb=8000000&ir=%5B0,67%5D&p=%5B-10189977.552153021,5109679.425872319,978.8526723152703%5D&t=%5B-10189628.10326397,5110512.29730411,208.62076614966804%5D
+            pointBudget: 2.5 * 1000 * 1000,
+            position: [-10598331.14, 3431303.70, 26180.43],
+            target: [-10589661.71, 3457244.43, -10923.27],
+            description:
+                '<p>Data courtesy DHS/NGA US Cities program 2010.</p>' +
+                '<p>Hosted by ' +
+                    '<a href="https://aws.amazon.com/public-datasets/">' +
+                        'AWS Public Datasets Team' +
+                    '</a>.' +
+                '</p>'
         };
     </script>
 	<script src="../libs/jquery/jquery-3.1.1.min.js" type="text/javascript"></script>

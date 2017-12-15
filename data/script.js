@@ -30,7 +30,7 @@ var defaults = {
     pointBudget: 3 * 1000 * 1000,
     intensityRange: [0, 256],
     weightClassification: 1,
-    fov: 60,
+    fov: 80,
     opacity: 1,
     rgbGamma: 1, rgbContrast: 0, rgbBrightness: 0,
     intensityGamma: 1, intensityContrast: 0, intensityBrightness: 0,
@@ -192,6 +192,9 @@ var set = (k, v) => {
         case 'language': case 'l': case 'lang':
             viewer.setLanguage(v);
             break;
+        case 'description':
+            viewer.setDescription(v);
+            break;
         case 'server': case 's': case 'resource': case 'r':
         case 'near': case 'far': case 'debug':
             // Greyhound server/resource selections - handled elsewhere.
@@ -229,6 +232,14 @@ var configure = () => {
     configureFrom(defaults);
     configureFrom(config);
     configureFromQuery();
+
+    if (typeof(Storage) !== 'undefined') {
+        var pb = parseInt(localStorage.getItem('pointBudget'));
+        if (Number.isInteger(pb)) {
+            console.log('Setting pointBudget from localStorage');
+            viewer.setPointBudget(pb);
+        }
+    }
 };
 
 var protocol = 'greyhound://';
@@ -322,6 +333,13 @@ var init = () => {
         if (r) q += (q ? '&' : '?') + 'r=' + JSON.stringify(r);
 
         history.replaceState(null, null, location.pathname + q);
+
+        viewer.addEventListener('point_budget_changed', (e) => {
+            if (typeof(Storage) !== 'undefined') {
+                console.log('Storing pointBudget');
+                localStorage.setItem('pointBudget', viewer.getPointBudget());
+            }
+        });
     });
 };
 
@@ -351,6 +369,13 @@ resources.forEach((resource) => {
     });
 });
 
+document.onkeypress = function(evt) {
+    evt = evt || window.event;
+    var charCode = evt.keyCode || evt.which;
+    var charStr = String.fromCharCode(charCode);
+    console.log(charStr);
+};
+
 window.toggleAnnotations = () => {
     var el = $('#entwine_toggle');
     var turningOn = el.attr('state') == 'off';
@@ -366,6 +391,20 @@ window.toggleAnnotations = () => {
         el.attr('src', '/resources/icons/entwine-annotations-off.svg');
     }
 }
+
+window.Vec = (x, y, z) => {
+    if (Array.isArray(x)) return new THREE.Vector3(x[0], x[1], x[2]);
+    else return new THREE.Vector3(x, y, z);
+};
+
+window.addAnnotation = (v) => {
+    viewer.scene.addAnnotation(Vec(v.pos), {
+        title: v.name,
+        cameraPosition: Vec(v.cpos),
+        cameraTarget: Vec(v.ctgt),
+        actions: v.actions
+    });
+};
 
 new Clipboard('#entwine_copy', {
     text: function() {

@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <title>Greyhound Potree Viewer</title>
+
+	<link rel="stylesheet" type="text/css" href="../build/potree/potree.css">
+	<link rel="stylesheet" type="text/css" href="../libs/jquery-ui-1.11.4/jquery-ui.css">
+	<link rel="stylesheet" type="text/css" href="../libs/perfect-scrollbar/css/perfect-scrollbar.css">
+	<link rel="stylesheet" href="../libs/openlayers3/ol.css" type="text/css">
+    <link rel="stylesheet" href="../css/entwine.css" type="text/css">
+  </head>
+
+  <body>
+    <script type="text/javascript">
+        window.config = {
+            resource: [
+                'dk-z', 'ahn-z', 'dublin',
+                'iowa-z', 'mn-z',
+                'nyc-z', 'dc',
+                'nz-z'
+            ],
+            near: 50,
+            far: 100000000,
+            pointBudget: 6 * 1000 * 1000,
+            pos: [1136768.55, 7589777.81, 139.64],
+            target: [1136647.38, 7589720.32, 31.70],
+            classificationFilter: [7]
+        };
+    </script>
+	<script src="../libs/jquery/jquery-3.1.1.min.js" type="text/javascript"></script>
+	<script
+         src="../libs/perfect-scrollbar/js/perfect-scrollbar.jquery.js"
+         type="text/javascript"></script>
+	<script src="../libs/jquery-ui/jquery-ui.min.js" type="text/javascript"></script>
+	<script src="../libs/three.js/build/three.js" type="text/javascript"></script>
+	<script src="../libs/other/stats.min.js" type="text/javascript"></script>
+	<script src="../libs/other/BinaryHeap.js" type="text/javascript"></script>
+	<script src="../libs/tween/tween.min.js" type="text/javascript"></script>
+	<script src="../libs/d3/d3.js" type="text/javascript"></script>
+	<script src="../libs/proj4/proj4.js" type="text/javascript"></script>
+	<script src="../libs/openlayers3/ol.js" type="text/javascript"></script>
+    <script src="../libs/i18next/i18next.js" type="text/javascript"></script>
+    <script src="../libs/clipboard.min.js" type="text/javascript"></script>
+	<script src="../build/potree/potree.js" type="text/javascript"></script>
+
+    <div id="potree_container">
+        <a href="/" id="entwine_logo_container">
+            <img id="entwine_logo" src="/resources/images/entwine-logo.png"/>
+        </a>
+        <img id="entwine_copy" src="/resources/icons/entwine-share.svg"
+            title='Share a link with current view settings'
+            onclick="$('#entwine_copied').show()"
+            onmouseleave="$('#entwine_copied').hide()"
+        />
+        <div id="entwine_copied">Copied shareable link</div>
+        <img id="entwine_toggle"
+             state='on'
+             src="/resources/icons/entwine-annotations-on.svg"
+             title='Toggle annotations'
+             onclick="toggleAnnotations()"
+        />
+		<div id="potree_render_area">
+			<img class="potree_menu_toggle"
+                src="../resources/icons/menu_button.svg"
+                onclick="viewer.toggleSidebar()"
+            />
+			<img id="potree_map_toggle"
+                src="../resources/icons/map_icon.png"
+                onclick="viewer.toggleMap()"
+            />
+			<div id="potree_map" class="mapBox">
+                <div id="potree_map_header"></div>
+				<div id="potree_map_content" class="map"></div>
+			</div>
+			<div id="potree_description" class="potree_info_text"></div>
+		</div>
+		<div id="potree_sidebar_container"></div>
+    </div>
+    <script type="text/javascript" src="script.js"></script>
+    <script type="text/javascript">
+        var maybeParse = function(key, val) {
+            if (['s', 'server', 'r', 'resource'].includes(key)) {
+                if (val[0] == '[') return JSON.parse(val);
+                if (val[0] != '"') return val;
+            }
+            return JSON.parse(val);
+        };
+
+        var getQueryParam = function(name) {
+            name = name.replace(/[\[\]]/g, '\\$&');
+            var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)');
+            var results = regex.exec(window.location.href);
+            if (!results) return null;
+            if (!results[2]) return true;
+
+            return maybeParse(name, decodeURIComponent(
+                        results[2].replace(/\+/g, ' ')));
+        }
+        var Vec = (x, y, z) => {
+            if (Array.isArray(x)) return new THREE.Vector3(x[0], x[1], x[2]);
+            else return new THREE.Vector3(x, y, z);
+        };
+
+        var europe = () => {
+            $(".annotation").first().find("span").click();
+            viewer.setMaterial("Elevation");
+            viewer.setElevationRange(-20, 110);
+        };
+
+        var hidden = [9e9,9e9,9e9];
+
+        var addAnnotation = (v) => {
+            viewer.scene.addAnnotation(Vec(v.pos), {
+                title: v.name,
+                cameraPosition: Vec(v.cpos),
+                cameraTarget: Vec(v.ctgt),
+                actions: v.actions
+            });
+        };
+
+        var keyPoints = [
+            {
+                name: "Denmark",
+                pos: hidden,
+                cpos: [1136768.55, 7589777.81, 139.64],
+                ctgt: [1136647.38, 7589720.32, 31.70],
+                time: 5,
+                actions: [{
+                    icon: "../resources/icons/rgb.png",
+                    onclick: e => viewer.setMaterial("RGB")
+                }]
+            },
+            {
+                name: "Denmark",
+                pos: hidden,
+                cpos: [1137271.85, 7590016.60, 587.98],
+                ctgt: [1136647.38, 7589720.32, 31.70],
+                time: 2,
+                actions: [{
+                    icon: "../resources/icons/rgb.png",
+                    onclick: e => viewer.setMaterial("RGB")
+                }]
+            },
+            {
+                name: "Denmark",
+                pos: hidden,
+                cpos: [1141755.49, 7592143.86, 4582.02],
+                ctgt: [1136647.38, 7589720.32, 31.70],
+                time: 2,
+                actions: [{
+                    icon: "../resources/icons/rgb.png",
+                    onclick: e => viewer.setMaterial("RGB")
+                }]
+            },
+            {
+                name: "Denmark",
+                pos: hidden,
+                cpos: [1522245.52, 7772667.15, 343523.70],
+                ctgt: [1136647.38, 7589720.32, 31.70],
+                time: 2,
+                actions: [{
+                    icon: "../resources/icons/rgb.png",
+                    onclick: e => {
+                        setTimeout(() => {
+                            viewer.setMaterial("Elevation");
+                            viewer.setElevationRange(-35, 105)
+                        }, 1500);
+                    }
+                }]
+            },
+            {
+                name: "DK/AHN",
+                pos: hidden,
+                cpos: [1022705.32, 7053745.61, 1237194.76],
+                ctgt: [1020628.56, 7208385.90, -5289.77],
+                time: 4,
+                actions: [{
+                    icon: "../resources/icons/rgb.png",
+                    onclick: e => {
+                    }
+                }]
+            },
+            {
+                name: "Amsterdam",
+                pos: hidden,
+                cpos: [546731.67, 6864174.77, 3204.50],
+                ctgt: [545296.63, 6866840.48, -565.82],
+                time: 2,
+                actions: [{
+                    icon: "../resources/icons/rgb.png",
+                    onclick: e => {
+                        viewer.setElevationRange(20, 120);
+                    }
+                }]
+            },
+            {
+                name: "Rijksmuseum",
+                pos: hidden,
+                cpos: [543563.55, 6865242.55, 195.76],
+                ctgt: [543752.47, 6865394.36, 28.43],
+                time: 5,
+                actions: [
+                    {
+                        icon: Potree.resourcePath + "/icons/profile.svg",
+                        onclick: e => {
+                            viewer.setPointBudget(7 * 1000 * 1000);
+                        }
+                    }
+                ]
+            },
+            {
+                name: "Rijksmuseum-Amsterdam",
+                pos: hidden,
+                cpos: [541992.08, 6863979.65, 1587.72],
+                ctgt: [543752.47, 6865394.36, 28.43],
+                time: 5,
+                actions: [
+                    {
+                        icon: Potree.resourcePath + "/icons/profile.svg",
+                        onclick: e => {
+                            viewer.setPointBudget(5 * 1000 * 1000);
+                        }
+                    }
+                ]
+            },
+            {
+                name: "Zoomed-Out-Amsterdam",
+                pos: hidden,
+                cpos: [486845.17, 6819661.51, 50435.01],
+                ctgt: [543752.47, 6865394.36, 28.43],
+                time: 2,
+            },
+            {
+                name: "Zoomed-Out-Europe",
+                pos: hidden,
+                cpos: [362773.80, 6610134.15, 56139.31],
+                ctgt: [565573.18, 6757289.93, -79039.83],
+                time: 2,
+            },
+            {
+                name: "Wayyy-Zoomed-Out-Europe",
+                pos: hidden,
+                cpos: [-925684.02, 6313164.35, 599491.77],
+                ctgt: [223984.67, 7147389.76, -166838.08],
+                time: 2,
+            },
+            {
+                name: "Dublin",
+                pos: hidden,
+                cpos: [-696268.18, 7044252.17, 2295.21],
+                ctgt: [-696398.37, 7046733.65, -803.78],
+                time: 4,
+                actions: [
+                    {
+                        icon: Potree.resourcePath + "/icons/profile.svg",
+                        onclick: e => {
+                            viewer.setElevationRange(-15, 60);
+                            viewer.setPointBudget(7 * 1000 * 1000);
+                        }
+                    }
+                ]
+            },
+            {
+                name: "St-Patricks",
+                pos: hidden,
+                cpos: [-698145.33, 7045987.20, 108.42],
+                ctgt: [-698060.73, 7046018.58, 16.84],
+                time: 6,
+                actions: [
+                    {
+                        icon: Potree.resourcePath + "/icons/profile.svg",
+                        onclick: e => {
+                            viewer.setMaterial("Elevation");
+                            viewer.setElevationRange(0, 80);
+                        }
+                    }
+                ]
+            },
+            {
+                name: "World",
+                pos: hidden,
+                cpos: [-5002858.40, 2094397.97, 7172426.37],
+                ctgt: [-5080637.87, 6437916.91, 17059.62],
+                time: 8,
+                actions: [
+                    {
+                        icon: Potree.resourcePath + "/icons/profile.svg",
+                        onclick: e => {
+                            viewer.setElevationRange(-200, 700);
+                            viewer.setPointBudget(5 * 1000 * 1000);
+                        }
+                    }
+                ]
+            },
+            {
+                name: "Statue-Of-Liberty",
+                pos: hidden,
+                cpos: [ -8242794.68, 4966472.68, 124.65],
+                ctgt: [ -8242655.25, 4966684.57, 38.55],
+                time: 5,
+                actions: [
+                    {
+                        icon: Potree.resourcePath + "/icons/profile.svg",
+                        onclick: e => {
+                            viewer.setMaterial("Intensity");
+                            viewer.setIntensityBrightness(0.2);
+                        }
+                    }
+                ]
+            },
+            {
+                name: "National-Mall",
+                pos: hidden,
+                cpos: [ -8575829.92, 4706296.03, 328.64],
+                ctgt: [ -8575591.32, 4705877.93, 61.66],
+                time: 6,
+                actions: [
+                    {
+                        icon: Potree.resourcePath + "/icons/profile.svg",
+                        onclick: e => {
+                            viewer.setPointBudget(7 * 1000 * 1000);
+                        }
+                    }
+                ]
+            },
+            {
+                name: "Capitol Building",
+                pos: hidden,
+                cpos: [ -8577092.57, 4705917.84, 80.14],
+                ctgt: [ -8577158.54, 4705854.97, 35.58],
+                time: 6,
+                actions: [
+                    {
+                        icon: Potree.resourcePath + "/icons/profile.svg",
+                        onclick: e => {
+                            viewer.setMaterial("Elevation");
+                            viewer.setElevationRange(3, 41);
+                        }
+                    }
+                ]
+            },
+            {
+                name: "US",
+                pos: hidden,
+                cpos: [ -8095420.51, 4616384.34, 581398.41],
+                ctgt: [ -8461929.77, 4884094.38, 216493.85],
+                time: 6,
+                actions: [
+                    {
+                        icon: Potree.resourcePath + "/icons/profile.svg",
+                        onclick: e => {
+                            viewer.setPointBudget(5 * 1000 * 1000);
+                            viewer.setMaterial("Intensity");
+                            viewer.setIntensityBrightness(0.05);
+                            var c = document.getElementById(
+                                    'chkClassification_7');
+                            c.checked = true;
+                            viewer.setClassificationVisibility(7, true);
+                        }
+                    }
+                ]
+            },
+            {
+                name: "IA/MN",
+                pos: hidden,
+                cpos: [-10437780.45, 4730978.45, 852056.11],
+                ctgt: [-10450668.12, 5696446.73, -510295.76],
+                time: 2,
+                actions: [
+                    {
+                        icon: Potree.resourcePath + "/icons/profile.svg",
+                        onclick: e => {
+                            viewer.setIntensityBrightness(0.05);
+                            var c = document.getElementById(
+                                    'chkClassification_7');
+                            c.checked = true;
+                            viewer.setClassificationVisibility(7, true);
+                        }
+                    }
+                ]
+            },
+            {
+                name: "World-With-NZ",
+                pos: hidden,
+                cpos: [ 5263429.33, -5663465.50, 21223037.46],
+                ctgt: [ 5314181.73, -1665982.80, 3264791.82],
+                time: 4,
+            },
+            {
+                name: "NZ",
+                pos: hidden,
+                cpos: [ 19474209.84, -4472527.70, 2583.78],
+                ctgt: [ 19474044.79, -4469227.63, 879.85],
+                time: 2,
+                actions: [
+                    {
+                        icon: Potree.resourcePath + "/icons/profile.svg",
+                        onclick: e => {
+                            viewer.setIntensityBrightness(0);
+                            viewer.setIntensityGamma(0.5);
+                        }
+                    }
+                ]
+            },
+            {
+                name: "NZ-2",
+                pos: hidden,
+                cpos: [ 19471781.61, -4469282.77, 246.49],
+                ctgt: [ 19471308.31, -4468782.02, -97.67],
+                time: 3,
+            },
+            {
+                name: "NZ-3",
+                pos: hidden,
+                cpos: [ 19471412.58, -4469379.79, 86.35],
+                ctgt: [ 19471428.40, -4469333.01, 60.08],
+                time: 3,
+            }
+        ];
+
+
+            /*
+           [
+               413305686251, 638843557990, 1423345832,
+               167692724196, 291759477273,
+               4755025996, 10030967057,
+               10709325666
+           ]
+           */
+        /*
+                'dk-z', 'ahn-z', 'dublin',
+                'iowa-z', 'mn-z',
+                'nyc-z', 'dc',
+                'nz-z'
+                */
+        var annotations = [
+            {
+                name: "Denmark (413.3B)",
+                pos: [1045753.42, 7551492.94, 130.66]
+            },
+            {
+                name: "Netherlands (638.8B)",
+                pos: [670499.09, 6836869.41, 51.31]
+            },
+            {
+                name: "Dublin (1.4B)",
+                pos: [-696310.91, 7046882.31, 9.71]
+            },
+            {
+                name: "Iowa (167.9B)",
+                pos: [-10409519.16, 5202543.56, 341.06]
+            },
+            {
+                name: "Minnesota (291.7B)",
+                pos: [-10523408.41, 5940190.50, 420.50]
+            },
+            {
+                name: "New York City (4.8B)",
+                pos: [-8229338.61, 4963236.76, 37.48]
+            },
+            {
+                name: "Washington, DC (10.0B)",
+                pos: [-8571680.99, 4704158.70, 19.02]
+            },
+            {
+                name: "New Zealand (10.7B)",
+                pos: [19451371.23, -4413036.69, 362.96]
+            },
+        ];
+
+        keyPoints.forEach(addAnnotation);
+        annotations.forEach(addAnnotation);
+
+        var timeouts = [];
+        for (var i = 0; i < keyPoints.length; ++i) {
+            var k = keyPoints[i];
+            timeouts.push((timeouts.slice(-1)[0] || 20) + k.time);
+        }
+
+        if (getQueryParam('end')) {
+            setTimeout(() => {
+                $(".annotation").eq(timeouts.length - 1).find("span").click();
+                $(".annotation").eq(timeouts.length - 1).find("img").click();
+            }, 1000);
+        }
+        else {
+            for (let i = 0; i < timeouts.length; ++i) {
+                var k = keyPoints[i];
+                var t = timeouts[i];
+                console.log('Timing', k.name, t);
+                setTimeout(() => {
+                    console.log('Going to', i);
+                    $(".annotation").eq(i).find("span").click();
+                    $(".annotation").eq(i).find("img").click();
+                }, t * 1000);
+            }
+        }
+
+        $(".annotation").last().find("img").css("filter", "invert(0)");
+        $(".annotation-item").last().find("img").last().css("filter", "invert(0)");
+
+        $("#menu_annotations").next().show();
+    </script>
+  </body>
+</html>
+
