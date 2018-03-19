@@ -717,15 +717,14 @@ Potree.PointCloudTree = class PointCloudTree extends THREE.Object3D{
 
 
 
-
 Potree.WorkerPool = class WorkerPool{
 
 	constructor(){
 		this.workers = {};
 	}
-
+	
 	getWorker(url){
-
+		
 		if(!this.workers[url]){
 			this.workers[url] = [];
 		}
@@ -734,16 +733,16 @@ Potree.WorkerPool = class WorkerPool{
 			let worker = new Worker(url);
 			this.workers[url].push(worker);
 		}
-
+		
 		let worker = this.workers[url].pop();
-
+		
 		return worker;
 	}
-
+	
 	returnWorker(url, worker){
 		this.workers[url].push(worker);
 	}
-
+	
 }
 
 Potree.workerPool = new Potree.WorkerPool();
@@ -2471,12 +2470,20 @@ var getNormalization = function(serverURL, baseDepth, cb) {
 Potree.GreyhoundLoader.load = function load(url, callback) {
 	var HIERARCHY_STEP_SIZE = 5;
 
+    console.log('In:', url);
+
 	try {
 		// We assume everything ater the string 'greyhound://' is the server url
 		var serverURL = url.split('greyhound://')[1];
-        if (serverURL.split('http://').length == 1) {
+        var http = 'http://';
+        var https = 'https://';
+
+        console.log('Checking', serverURL);
+        if (serverURL.indexOf(http) != 0 && serverURL.indexOf(https) != 0) {
             serverURL = 'http://' + serverURL;
         }
+
+        console.log('F:', serverURL)
 
         fetch(serverURL + 'info', function(err, data) {
             if (err) throw new Error(err);

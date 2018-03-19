@@ -346,8 +346,13 @@ var init = () => {
 var loaded = 0;
 
 resources.forEach((resource) => {
-    console.log('Loading', resource);
     var root = server + 'resource/' + resource + '/';
+    if (resource.indexOf('/resource/') != -1) root = resource;
+
+    if (root.substring(0, protocol.length) != protocol) root = protocol + root;
+    if (root.slice(-1) != '/') root = root + '/';
+
+    console.log('Loading', root);
 
     Potree.loadPointCloud(root, resource, (e) => {
         console.log('Loaded', resource);
