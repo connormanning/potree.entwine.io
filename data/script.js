@@ -1,5 +1,5 @@
 var maybeParse = function(key, val) {
-    if (['s', 'server', 'r', 'resource'].includes(key)) {
+    if (['r', 'resource'].includes(key)) {
         if (val[0] == '[') return JSON.parse(val);
         if (val[0] != '"') return val;
     }
@@ -21,13 +21,13 @@ window.viewer = new Potree.Viewer(
 
 var defaults = {
     edl: true,
-    edlStrength: 1,
+    edlStrength: 0.2,
     edlRadius: 1.4,
-    pointSize: 3,
-    pointType: 'Fixed',
-    material: 'RGB',
-    quality: 'Squares',
-    pointBudget: 3 * 1000 * 1000,
+    pointSize: 1,
+    pointType: Potree.PointSizeType.FIXED,
+    material: Potree.PointColorType.RGB,
+    shape: Potree.PointShape.SQUARE,
+    pointBudget: 3.5 * 1000 * 1000,
     intensityRange: [0, 256],
     weightClassification: 1,
     fov: 80,
@@ -62,28 +62,31 @@ var getClassificationFilters = () => {
 };
 
 var get = () => {
-    var era = [viewer.getElevationRange().min, viewer.getElevationRange().max];
+    var pc = viewer.scene.pointclouds[0];
+    var mt = pc.material;
+
     var state = {
         // Include these if they've changed from the initial state.
-        ps: maybe('pointSize', viewer.getPointSize()),
-        pt: maybe('pointType', viewer.getPointSizing()),
-        fov: maybe('fov', viewer.getFOV()),
-        op: maybe('opacity', viewer.getOpacity()),
+        ps: maybe('pointSize', mt.size),
+        pt: maybe('pointType', mt.pointSizeType),
+        fov: maybe('fov', viewer.fov),
+        op: maybe('opacity', mt.opacity),
         edl: maybe('edl', viewer.getEDLEnabled()),
         er: maybe('edlRadius', viewer.getEDLRadius()),
         es: maybe('edlStrength', viewer.getEDLStrength()),
         pb: maybe('pointBudget', viewer.getPointBudget()),
-        m: maybe('material', viewer.getMaterialName()),
-        q: maybe('quality', viewer.getQuality()),
-        ir: maybe('intensityRange', viewer.getIntensityRange()),
-        era: maybe('elevationRange', era),
-
-        cg: maybe('rgbGamma', viewer.getRGBGamma()),
-        cc: maybe('rgbContrast', viewer.getRGBContrast()),
-        cb: maybe('rgbBrightness', viewer.getRGBBrightness()),
-        ig: maybe('intensityGamma', viewer.getIntensityGamma()),
-        ic: maybe('intensityContrast', viewer.getIntensityContrast()),
-        ib: maybe('intensityBrightness', viewer.getIntensityBrightness()),
+        m: maybe('material', mt.pointColorType),
+        sh: maybe('shape', mt.shape),
+        ir: maybe('intensityRange',
+                [mt.intensityRange[0], mt.intensityRange[1]]),
+        era: maybe('elevationRange',
+                [mt.elevationRange[0], mt.elevationRange[1]]),
+        cg: maybe('rgbGamma', mt.rgbGamma),
+        cc: maybe('rgbContrast', mt.rgbContrast),
+        cb: maybe('rgbBrightness', mt.rgbBrightness),
+        ig: maybe('intensityGamma', mt.intensityGamma),
+        ic: maybe('intensityContrast', mt.intensityContrast),
+        ib: maybe('intensityBrightness', mt.intensityBrightness),
 
         cf: maybe('classificationFilter', getClassificationFilters()),
 
@@ -92,7 +95,6 @@ var get = () => {
         t: viewer.scene.view.getPivot().toArray(),
 
         // For these, only include them if they are query overrides.
-        s: getQueryParam('s') || getQueryParam('server'),
         r: getQueryParam('r') || getQueryParam('resource'),
     };
 
@@ -105,16 +107,16 @@ var get = () => {
 var set = (k, v) => {
     switch (k) {
         case 'pointSize': case 'ps':
-            viewer.setPointSize(v);
+            viewer.scene.pointclouds.forEach((p) => p.material.size = v);
             break;
         case 'pointSizing': case 'pointType': case 'pt':
-            viewer.setPointSizing(v);
+            viewer.scene.pointclouds.forEach((p) => p.material.pointSizeType = v);
             break;
         case 'fov': case 'FOV':
             viewer.setFOV(v);
             break;
         case 'opacity': case 'op':
-            viewer.setOpacity(v);
+            viewer.scene.pointclouds.forEach((p) => p.material.opacity = v);
             break;
         case 'edlEnabled': case 'edl':
             viewer.setEDLEnabled(v);
@@ -125,6 +127,7 @@ var set = (k, v) => {
         case 'edlStrength': case 'es':
             viewer.setEDLStrength(v);
             break;
+        /*
         case 'clipMode': case 'cm':
             var mode;
             if (v == 'HIGHLIGHT_INSIDE') mode = Potree.ClipMode.HIGHLIGHT_INSIDE;
@@ -132,6 +135,7 @@ var set = (k, v) => {
             else if (v === 'DISABLED')  mode = Potree.ClipMode.DISABLED;
             if (mode) viewer.setClipMode(mode);
             break;
+        */
         case 'pointBudget': case 'pb':
             viewer.setPointBudget(v);
             break;
@@ -139,10 +143,10 @@ var set = (k, v) => {
             viewer.setShowBoundingBox(v);
             break;
         case 'material': case 'm': case 'color': case 'c':
-            viewer.setMaterial(v);
+            viewer.scene.pointclouds.forEach((p) => p.material.pointColorType = v);
             break;
-        case 'quality': case 'q':
-            viewer.setQuality(v);
+        case 'shape': case 'sh':
+            viewer.scene.pointclouds.forEach((p) => p.material.shape = v);
             break;
         case 'position': case 'pos': case 'p':
             viewer.scene.view.position.set(v[0], v[1], v[2]);
@@ -154,31 +158,37 @@ var set = (k, v) => {
             viewer.setBackground(v);
             break;
         case 'intensityRange': case 'ir':
-            viewer.setIntensityRange(v[0], v[1]);
+            viewer.scene.pointclouds.forEach((p) =>
+                    p.material.intensityRange = [v[0], v[1]]);
             break;
         case 'elevationRange': case 'era':
-            viewer.setElevationRange(v[0], v[1]);
+            viewer.scene.pointclouds.forEach((p) =>
+                    p.material.elevationRange = [v[0], v[1]]);
             break;
         case 'rgbGamma': case 'cg':
-            viewer.setRGBGamma(v);
+            viewer.scene.pointclouds.forEach((p) => p.material.rgbGamma = v);
             break;
         case 'rgbContrast': case 'cc':
-            viewer.setRGBContrast(v);
+            viewer.scene.pointclouds.forEach((p) => p.material.rgbContrast = v);
             break;
         case 'rgbBrightness': case 'cb':
-            viewer.setRGBBrightness(v);
+            viewer.scene.pointclouds.forEach((p) => p.material.rgbBrightness = v);
             break;
         case 'intensityGamma': case 'ig':
-            viewer.setIntensityGamma(v);
+            viewer.scene.pointclouds.forEach((p) =>
+                    p.material.intensityGamma = v);
             break;
         case 'intensityContrast': case 'ic':
-            viewer.setIntensityContrast(v);
+            viewer.scene.pointclouds.forEach((p) =>
+                    p.material.intensityContrast = v);
             break;
         case 'intensityBrightness': case 'ib':
-            viewer.setIntensityBrightness(v);
+            viewer.scene.pointclouds.forEach((p) =>
+                    p.material.intensityBrightness = v);
             break;
         case 'weightClassification': case 'wc':
-            viewer.setWeightClassification(v);
+            viewer.scene.pointclouds.forEach((p) =>
+                    p.material.weightClassification = v);
             break;
         case 'classificationFilter': case 'cf':
             for (var i = 0; i < v.length; ++i) {
@@ -195,9 +205,11 @@ var set = (k, v) => {
         case 'description':
             viewer.setDescription(v);
             break;
-        case 'server': case 's': case 'resource': case 'r':
-        case 'near': case 'far': case 'debug':
-            // Greyhound server/resource selections - handled elsewhere.
+        case 'resource': case 'r':
+        case 'near': case 'far':
+        case 'debug':
+        case 'annotations':
+            // Handled elsewhere.
             break;
         default:
             console.log('Unrecognized query parameter:', k);
@@ -242,13 +254,6 @@ var configure = () => {
     }
 };
 
-var protocol = 'greyhound://';
-var server =
-    getQueryParam('s') ||
-    getQueryParam('server') ||
-    config.server ||
-    protocol + 'cache.greyhound.io/';
-
 // Only allow resource override if the config doesn't specify one - this avoids
 // things like /data/autzen.html?resource=half-dome
 var resources =
@@ -260,11 +265,6 @@ if (!Array.isArray(resources)) resources = [resources];
 
 if (!resources) throw new Error('No resource supplied');
 
-if (server.substring(0, protocol.length) != protocol) {
-    server = protocol + server;
-}
-if (server.slice(-1) != '/') server = server + '/';
-
 var mobileRegex =
     /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
 
@@ -273,6 +273,21 @@ if (mobileRegex.test(navigator.userAgent)) {
     config.pointBudget = 700000;
     config.edl = false;
 }
+
+
+window.Vec = (x, y, z) => {
+    if (Array.isArray(x)) return new THREE.Vector3(x[0], x[1], x[2]);
+    else return new THREE.Vector3(x, y, z);
+};
+
+window.addAnnotation = (v) => {
+    viewer.scene.addAnnotation(Vec(v.pos), {
+        title: v.name,
+        cameraPosition: Vec(v.cpos),
+        cameraTarget: Vec(v.ctgt),
+        actions: v.actions
+    });
+};
 
 var init = () => {
     viewer.loadGUI(() => {
@@ -283,6 +298,7 @@ var init = () => {
 
         configure();
 
+        /*
         // Update material pane - e.g. add gamma for RGB or sliders for elevation.
         var selectedValue = viewer.getMaterialName();
 
@@ -325,14 +341,15 @@ var init = () => {
         if (selectedValue === "Intensity Gradient") {
             blockIntensity.css("display", "block");
         }
+        */
 
         var q = '';
-        var s = getQueryParam('s') || getQueryParam('server');
         var r = getQueryParam('r') || getQueryParam('resource');
-        if (s) q += '?s=' + JSON.stringify(s);
         if (r) q += (q ? '&' : '?') + 'r=' + JSON.stringify(r);
 
         history.replaceState(null, null, location.pathname + q);
+
+        viewer.useHQ = true;
 
         viewer.addEventListener('point_budget_changed', (e) => {
             if (typeof(Storage) !== 'undefined') {
@@ -340,34 +357,45 @@ var init = () => {
                 localStorage.setItem('pointBudget', viewer.getPointBudget());
             }
         });
+
+        if (config.annotations) config.annotations.forEach((a) => {
+            addAnnotation(a);
+        });
     });
 };
 
 var loaded = 0;
 
-resources.forEach((resource) => {
-    var root = server + 'resource/' + resource + '/';
-    if (resource.indexOf('/resource/') != -1) root = resource;
+var http = 'http';
+var base = 'https://s3.amazonaws.com/ept-data/'
+var post = 'entwine.json';
 
-    if (root.substring(0, protocol.length) != protocol) root = protocol + root;
-    if (root.slice(-1) != '/') root = root + '/';
+resources.forEach((path) => {
+    if (path.substring(0, http.length) != http) path = base + path;
+    if (path.indexOf(post) == -1) {
+        if (path[path.length - 1] != '/') path += '/';
+        path += post;
+    }
 
-    console.log('Loading', root);
+    var name = path.replace('/entwine.json', '').split('/');
+    name = name[name.length - 1];
 
-    Potree.loadPointCloud(root, resource, (e) => {
-        console.log('Loaded', resource);
+    console.log('Loading', name, path);
+
+    Potree.loadPointCloud(path, name, (e) => {
+        console.log('Loaded', name);
         viewer.scene.addPointCloud(e.pointcloud);
         console.log(e.pointcloud);
 
         if (++loaded == resources.length) {
             console.log('All point clouds loaded');
             viewer.fitToScreen();
-            viewer.scene.camera.near = 10;
+            // viewer.scene.camera.near = 10;
 
-            var elevObj = viewer.getElevationRange();
-            defaults.elevationRange = [elevObj.min, elevObj.max];
-            if (config.near) viewer.scene.camera.near = config.near;
-            if (config.far) viewer.scene.camera.far = config.far;
+            // var elevObj = viewer.getElevationRange();
+            // defaults.elevationRange = [elevObj.min, elevObj.max];
+            // if (config.near) viewer.scene.camera.near = config.near;
+            // if (config.far) viewer.scene.camera.far = config.far;
 
             init();
         }
@@ -396,20 +424,6 @@ window.toggleAnnotations = () => {
         el.attr('src', '/resources/icons/entwine-annotations-off.svg');
     }
 }
-
-window.Vec = (x, y, z) => {
-    if (Array.isArray(x)) return new THREE.Vector3(x[0], x[1], x[2]);
-    else return new THREE.Vector3(x, y, z);
-};
-
-window.addAnnotation = (v) => {
-    viewer.scene.addAnnotation(Vec(v.pos), {
-        title: v.name,
-        cameraPosition: Vec(v.cpos),
-        cameraTarget: Vec(v.ctgt),
-        actions: v.actions
-    });
-};
 
 new Clipboard('#entwine_copy', {
     text: function() {
