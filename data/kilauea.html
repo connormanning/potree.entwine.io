@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="description" content="">
+	<meta name="author" content="">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+	<title>Potree Viewer</title>
+
+	<link rel="stylesheet" type="text/css" href="../build/potree/potree.css">
+	<link rel="stylesheet" type="text/css" href="../libs/jquery-ui/jquery-ui.min.css">
+	<link rel="stylesheet" type="text/css" href="../libs/perfect-scrollbar/css/perfect-scrollbar.css">
+	<link rel="stylesheet" type="text/css" href="../libs/openlayers3/ol.css">
+	<link rel="stylesheet" type="text/css" href="../libs/spectrum/spectrum.css">
+	<link rel="stylesheet" type="text/css" href="../libs/jstree/themes/mixed/style.css">
+    <link rel="stylesheet" href="../css/entwine.css" type="text/css">
+</head>
+<body>
+	<script src="../libs/jquery/jquery-3.1.1.min.js"></script>
+	<script src="../libs/spectrum/spectrum.js"></script>
+	<script src="../libs/perfect-scrollbar/js/perfect-scrollbar.jquery.js"></script>
+	<script src="../libs/jquery-ui/jquery-ui.min.js"></script>
+	<script src="../libs/three.js/build/three.min.js"></script>
+	<script src="../libs/other/BinaryHeap.js"></script>
+	<script src="../libs/tween/tween.min.js"></script>
+	<script src="../libs/d3/d3.js"></script>
+	<script src="../libs/proj4/proj4.js"></script>
+	<script src="../libs/openlayers3/ol.js"></script>
+	<script src="../libs/i18next/i18next.js"></script>
+	<script src="../libs/jstree/jstree.js"></script>
+	<script src="../build/potree/potree.js"></script>
+	<script src="../libs/plasio/js/laslaz.js"></script>
+    <script src="../libs/clipboard.min.js" type="text/javascript"></script>
+    <script type="text/javascript">
+        window.config = {
+            resource: 'kilauea',
+            edlStrength: 1,
+            pointSize: 3,
+            pointType: Potree.PointSizeType.FIXED,
+            material: Potree.PointColorType.INTENSITY_GRADIENT,
+            intensityRange: [0, 65536],
+            intensityBrightness: 0.18,
+            position: [-17266599.507, 2200053.468, 1809.513],
+            target: [-17266246.955, 2200818.568, 782.359],
+            annotations: [{
+                name: "Puʻu ʻŌʻō",
+                pos: [-17266198.860, 2200626.630, 860.710],
+                cpos: [-17266321.747, 2200763.819, 1207.182],
+                ctgt: [-17266320.945, 2200784.620, 594.822]
+            }, {
+                name: "Hiʻiaka Crater",
+                pos: [-17280267.940, 2198979.270, 978.800],
+                cpos: [-17280351.699, 2198879.858, 1210.292],
+                ctgt: [-17280186.390, 2199020.028, 993.929]
+            }, {
+                name: "Pauahi Crater",
+                pos: [-17279436.620, 2198351.710, 994.300],
+                cpos: [-17279049.765, 2198152.298, 1225.437],
+                ctgt: [-17279284.789, 2198437.478, 906.290],
+            }, {
+                name: "Pu'u Huluhulu",
+                pos: [-17277363.710, 2198683.420, 1047.790],
+                cpos: [-17277321.159, 2198679.615, 1292.821],
+                ctgt: [-17277322.415, 2198717.377, 1021.188]
+            }, {
+                name: "Fissure 9",
+                pos: [-17245101.620, 2208889.660, 246.560],
+                cpos: [-17245089.236, 2208881.496, 438.650],
+                ctgt: [-17245086.106, 2208894.391, 293.535],
+            }, {
+                name: "Fissure 10",
+                pos: [-17245771.410, 2208584.240, 261.420],
+                cpos: [-17245764.192, 2208580.524, 409.342],
+                ctgt: [-17245764.210, 2208581.779, 280.054]
+            }, {
+                name: "Fissure 11",
+                pos: [-17246078.000, 2208386.900, 267.750],
+                cpos: [-17246106.049, 2208367.051, 651.736],
+                ctgt: [-17246106.730, 2208391.925, 272.628]
+            }, {
+                name: "Fissure 12",
+                pos: [-17245972.670, 2208448.200, 267.820],
+                cpos: [-17245974.244, 2208428.976, 556.431],
+                ctgt: [-17245974.760, 2208447.840, 268.920]
+            }, {
+                name: "Fissure 24",
+                pos: [-17244866.480, 2209077.780, 238.560],
+                cpos: [-17244872.267, 2209009.327, 474.174],
+                ctgt: [-17244870.284, 2209053.706, 303.437]
+            }],
+            classificationFilter: [7]
+        };
+    </script>
+    <div id="potree_container">
+		<div id="potree_render_area"></div>
+		<div id="potree_sidebar_container"></div>
+	</div>
+        <a href="/" id="entwine_logo_container">
+            <img id="entwine_logo" src="/resources/images/entwine-logo.png"/>
+        </a>
+        <img id="entwine_copy" src="/resources/icons/entwine-share.svg"
+            title='Share a link with current view settings'
+            onclick="$('#entwine_copied').show()"
+            onmouseleave="$('#entwine_copied').hide()"
+        />
+        <div id="entwine_copied">Copied shareable link</div>
+        <img id="entwine_toggle"
+             state='on'
+             src="/resources/icons/entwine-annotations-on.svg"
+             title='Toggle annotations'
+             onclick="toggleAnnotations()"
+        />
+    <script type="text/javascript" src="script.js"></script>
+  </body>
+</html>
+

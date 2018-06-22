@@ -1,5 +1,5 @@
 var maybeParse = function(key, val) {
-    if (['r', 'resource'].includes(key)) {
+    if (['r', 'resource', 'b', 'base'].includes(key)) {
         if (val[0] == '[') return JSON.parse(val);
         if (val[0] != '"') return val;
     }
@@ -21,13 +21,13 @@ window.viewer = new Potree.Viewer(
 
 var defaults = {
     edl: true,
-    edlStrength: 0.2,
+    edlStrength: 1,
     edlRadius: 1.4,
     pointSize: 1,
-    pointType: Potree.PointSizeType.FIXED,
+    pointType: Potree.PointSizeType.ADAPTIVE,
     material: Potree.PointColorType.RGB,
     shape: Potree.PointShape.SQUARE,
-    pointBudget: 3.5 * 1000 * 1000,
+    pointBudget: 3 * 1000 * 1000,
     intensityRange: [0, 256],
     weightClassification: 1,
     fov: 80,
@@ -96,6 +96,7 @@ var get = () => {
 
         // For these, only include them if they are query overrides.
         r: getQueryParam('r') || getQueryParam('resource'),
+        b: getQueryParam('b') || getQueryParam('base')
     };
 
     return Object.keys(state).reduce((p, k) => {
@@ -206,6 +207,7 @@ var set = (k, v) => {
             viewer.setDescription(v);
             break;
         case 'resource': case 'r':
+        case 'base': case 'b':
         case 'near': case 'far':
         case 'debug':
         case 'annotations':
@@ -274,7 +276,6 @@ if (mobileRegex.test(navigator.userAgent)) {
     config.edl = false;
 }
 
-
 window.Vec = (x, y, z) => {
     if (Array.isArray(x)) return new THREE.Vector3(x[0], x[1], x[2]);
     else return new THREE.Vector3(x, y, z);
@@ -289,7 +290,7 @@ window.addAnnotation = (v) => {
     });
 };
 
-var init = () => {
+var init = (name) => {
     viewer.loadGUI(() => {
         $('#menu_appearance').next().show();
         if (config.debug || defaults.debug || getQueryParam('debug')) {
@@ -298,54 +299,11 @@ var init = () => {
 
         configure();
 
-        /*
-        // Update material pane - e.g. add gamma for RGB or sliders for elevation.
-        var selectedValue = viewer.getMaterialName();
-
-        let blockWeights = $("#materials\\.composite_weight_container");
-        let blockElevation = $("#materials\\.elevation_container");
-        let blockRGB = $("#materials\\.rgb_container");
-        let blockIntensity = $("#materials\\.intensity_container");
-        let blockTransition = $("#materials\\.transition_container");
-
-        blockIntensity.css("display", "none");
-        blockElevation.css("display", "none");
-        blockRGB.css("display", "none");
-        blockWeights.css("display", "none");
-        blockTransition.css("display", "none");
-
-        if (selectedValue === "Composite") {
-            blockWeights.css("display", "block");
-            blockElevation.css("display", "block");
-            blockRGB.css("display", "block");
-            blockIntensity.css("display", "block");
-        }
-
-        if (selectedValue === "Elevation") {
-            blockElevation.css("display", "block");
-        }
-
-        if (selectedValue === "RGB and Elevation") {
-            blockRGB.css("display", "block");
-            blockElevation.css("display", "block");
-        }
-
-        if (selectedValue === "RGB") {
-            blockRGB.css("display", "block");
-        }
-
-        if (selectedValue === "Intensity") {
-            blockIntensity.css("display", "block");
-        }
-
-        if (selectedValue === "Intensity Gradient") {
-            blockIntensity.css("display", "block");
-        }
-        */
-
         var q = '';
         var r = getQueryParam('r') || getQueryParam('resource');
+        var b = getQueryParam('b') || getQueryParam('base');
         if (r) q += (q ? '&' : '?') + 'r=' + JSON.stringify(r);
+        if (b) q += (q ? '&' : '?') + 'b=' + JSON.stringify(b);
 
         history.replaceState(null, null, location.pathname + q);
 
@@ -361,13 +319,21 @@ var init = () => {
         if (config.annotations) config.annotations.forEach((a) => {
             addAnnotation(a);
         });
+
+        $('#menu_scene').click();
+        if (name) $("a:contains('" + name + "')").click();
     });
 };
 
 var loaded = 0;
 
 var http = 'http';
-var base = 'https://s3.amazonaws.com/ept-data/'
+var base = 'https://na-c.entwine.io/'
+if (getQueryParam('b')) {
+    base = getQueryParam('b');
+    if (base[base.length - 1] != '/') base += '/';
+}
+
 var post = 'entwine.json';
 
 resources.forEach((path) => {
@@ -397,7 +363,7 @@ resources.forEach((path) => {
             // if (config.near) viewer.scene.camera.near = config.near;
             // if (config.far) viewer.scene.camera.far = config.far;
 
-            init();
+            init(resources.length == 1 ? name : null);
         }
     });
 });
@@ -433,7 +399,7 @@ new Clipboard('#entwine_copy', {
             if (state[k]) keys = [k].concat(keys.filter((v) => v != k));
         };
         moveToFront('r');
-        moveToFront('s');
+        moveToFront('b');
         var q = keys.reduce((p, k) => {
             return p + (p.length ? '&' : '?') +
                 k + '=' + JSON.stringify(state[k]);

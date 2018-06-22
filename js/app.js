@@ -28,13 +28,6 @@ var Header = React.createClass({
                                 />
                             </a>
                         </div>
-                        <Nav>
-                            <a href='/about.html'>
-                                <span style={ { color: '#888' } }>
-                                    About
-                                </span>
-                            </a>
-                        </Nav>
                     </div>
                 </div>
             </div>
@@ -75,93 +68,101 @@ var Footer = React.createClass({
 var Thumb = React.createClass({
     render: function() {
         var r = this.props.resource;
-        var tooltip = r.locations.length == 2 ?
-            'Served from NA or EU' :
-            'Served from NA only';
+        var href = '/data/' + r.page + '.html';
 
-        var flags = r.locations.map((v) =>
-            <img
-                className='flag'
-                title={ tooltip }
-                src={ 'resources/icons/' + v + '.svg' }/>
-        );
-
-        return <div className='col-xs-6 col-sm-4'>
-            <a
-                href={ '/data/' + r.page + '.html' }
-            >
+        return <div>
+            <a className='lead row center-block' href={ '/data/' + r.page + '.html' }>
                 <img
                     className='img-responsive thumb img-thumbnail'
                     src={ 'resources/images/' + r.page + '.jpg' }
                 />
             </a>
-            <p className='lead center-block'>{ r.name } { flags }</p>
         </div>;
     }
 });
 
-var Resource = function(name, page, locations) {
+var Resource = function(name, page, eu) {
     this.name = name;
     this.page = page;
-    this.locations = locations || ['na'];
+    this.eu = eu;
 };
+
+var Credit = React.createClass({
+    render: function() {
+        return <div className='lead row'>
+            <div className='col-xs-3'/>
+            <div className='col-xs-3'>
+                <a href='https://www.erdc.usace.army.mil/Locations/CRREL/Research.aspx'>
+                    <img style={ { height: 100 } } className='img-responsive' src='resources/images/rsgis-logo.jpg'/>
+                </a>
+            </div>
+            <div className='col-xs-3'>
+                <a href='https://volcanoes.usgs.gov/vhp/observatories.html'>
+                    <img style={ { height: 100 } } className='img-responsive' src='resources/images/usgs-logo.jpg'/>
+                </a>
+            </div>
+            <div className='col-xs-3'/>
+        </div>;
+    }
+});
+
+var Content = React.createClass({
+    render: function() {
+        return <div className='lead row'>
+            <div className='col-xs-12 col-sm-2'/>
+            <div className='col-xs-12 col-sm-8'>
+                <h4>LiDAR tiles</h4>
+                <pre>{ 's3://grid-partner-share/Kilawea_1kmtiles/Pointclouds' }</pre>
+                <h4>0.5m DTM</h4>
+                <pre>{ 's3://grid-partner-share/Kilawea_1kmtiles/DTM_0.5m' }</pre>
+                <h4>0.5m DTM filled</h4>
+                <pre>{ 's3://grid-partner-share/Kilawea_1kmtiles/DTM_0.5m_filled' }</pre>
+                <h4>LiDAR flight lines</h4>
+                <pre>{ 's3://grid-partner-share/Kilawea' }</pre>
+            </div>
+            <div className='col-xs-12 col-sm-2'/>
+        </div>
+    }
+});
 
 var Page = React.createClass({
     render: function() {
-        var eu = ['eu', 'na'];
+        var eu = true;
 
-        var resources = [
-            new Resource('Denmark', 'denmark', eu),
-            new Resource('Railway - France', 'sncf', eu),
-            new Resource('Red Rocks Amphitheatre', 'red-rocks', eu),
-            // new Resource('New Zealand', 'new-zealand'),
-            new Resource('New York City', 'nyc'),
-            new Resource('Iowa', 'iowa'),
-            new Resource('Kentucky', 'kentucky'),
-            new Resource('Lake Isabella', 'lake-isabella', eu),
-            // new Resource('Washington DC', 'dc'),
-            // new Resource('Netherlands', 'ahn'),
-            // new Resource('Minnesota', 'mn'),
-            new Resource('Autzen Stadium', 'autzen', eu),
-            new Resource('Vanuatu Village - Nepal', 'vanuatu-village', eu),
-            // new Resource('Dublin', 'dublin', eu),
-            new Resource('Half Dome - Yosemite', 'half-dome', eu),
-            // new Resource('Cedar Falls Bridge - Iowa', 'iowa-bridge', eu),
-            new Resource('Mount St. Helens', 'st-helens', eu)
-        ];
+        var resources = [new Resource('Kīlauea', 'kilauea')];
 
         return <div>
             <Header/>
-                <div className='container-fluid'>
-                    <div className='row'>
-                        <div
-                            className='col-xs-12'
-                            style={ { paddingBottom: 64 } }
+            <div className='container-fluid'>
+                <div className='row'>
+                    <div
+                        className='col-xs-12'
+                        style={ { paddingBottom: 64 } }
+                    >
+                        <h1
+                            className='center-block'
+                            style={ {
+                                color: '#192854',
+                                paddingTop: 36,
+                                paddingBottom: 24
+                            } }
                         >
-                            <h2
-                                className='center-block'
-                                style={ {
-                                    color: '#192854',
-                                    paddingTop: 36,
-                                    paddingBottom: 24
-                                } }
-                            >
-                                Greyhound
-                                <span style={ { color: '#39B44A' } }> / </span>
-                                Potree Demo
-                            </h2>
-                            {
-                                resources.map((v, i) =>
-                                        <Thumb
-                                            key={ i }
-                                            resource={ v }
-                                            name={ v.name }
-                                            href={ v.page }
-                                            src={ v.image }/>)
-                            }
-                        </div>
+                            Kīlauea lidar
+                        </h1>
+                        {
+                            resources.map((v, i) =>
+                                    <Thumb
+                                        key={ i }
+                                        resource={ v }
+                                        name={ v.name }
+                                        href={ v.page }
+                                        src={ v.image }/>)
+                        }
+                        <Credit/>
+                        <Content/>
                     </div>
                 </div>
+            </div>
             <Footer/>
         </div>;
     }
