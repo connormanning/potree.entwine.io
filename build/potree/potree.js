@@ -11441,7 +11441,6 @@ Potree.PointCloudEptGeometry = class {
     constructor(url, info) {
         let version = info.version;
         let schema = info.schema;
-        let srs = info.srs;
         let bounds = info.bounds;
         let boundsConforming = info.boundsConforming;
 
@@ -11478,11 +11477,10 @@ Potree.PointCloudEptGeometry = class {
         this.tightBoundingSphere = this.tightBoundingBox.getBoundingSphere();
         this.version = new Potree.Version('1.6');
 
-        this.projection = info.projection;
+        this.projection = info.srs;
         this.pointAttributes = 'LAZ';
         this.spacing =
-            (this.boundingBox.max.x - this.boundingBox.min.x) /
-            Math.pow(2, this.ticks);
+            (this.boundingBox.max.x - this.boundingBox.min.x) / this.ticks;
 
         // TODO Switch on storage type.
         this.loader = new Potree.EptLazLoader();
