@@ -90,15 +90,13 @@ var Content = React.createClass({
         return <div className='center-block lead row'>
             <div className='col-xs-12 col-sm-2'/>
             <div className='col-xs-12 col-sm-8'>
-<p>
-    This demo gallery demonstrates interconnectivity between the <a href='http://potree.org'>Potree</a> renderer and <a href='https://github.com/hobu/greyhound'>Greyhound</a>, which is a point cloud streaming server for <a href='https://github.com/connormanning/entwine'>Entwine</a>-indexed endpoints.
-</p>
-<p>
-    The integration between Potree and Greyhound was accomplished via collaboration by <a href='https://www.esciencecenter.nl/profile/maarten-van-meersbergen-msc'>Maarten van Meersbergen</a>, <a href='https://www.esciencecenter.nl/profile/oscar-martinez-rubi-msc'>Oscar Martinez Rubi</a>, and <a href='https://github.com/connormanning'>Connor Manning</a> during the <a href='https://wiki.osgeo.org/wiki/Paris_Code_Sprint_2016'>OSGeo Paris Code Sprint 2016</a>.
-</p>
-<p>
-    The source code for this repository is available on <a href='https://github.com/connormanning/potree.entwine.io'>GitHub</a>.
-</p>
+                <p>
+                    This demo gallery demonstrates interconnectivity between the
+                    <a href='potree.org'>Potree</a> renderer and
+                    <a href='https://entwine.io'>Entwine</a>.  The source code
+                    for this repository is available on
+                    <a href='https://github.com/connormanning/potree.entwine.io'>GitHub</a>.
+                </p>
             </div>
             <div className='col-xs-12 col-sm-2'/>
         </div>
@@ -123,9 +121,9 @@ var Page = React.createClass({
                                     paddingBottom: 24
                                 } }
                             >
-                                Greyhound
+                                Entwine
                                 <span style={ { color: '#39B44A' } }> / </span>
-                                Potree Demo
+                                Potree
                             </h2>
                             <h3
                                 className='center-block'
@@ -158,6 +156,10 @@ var Page = React.createClass({
 
                                 <Credit name='Lake Isabella'>
                                     David Finnegan, <a href="http://www.erdc.usace.army.mil/Locations/CRREL/Research.aspx">RS/GIS CRREL USACE</a>, 2015
+                                </Credit>
+
+                                <Credit name='Dublin'>
+                                    NYU Research Data, <a href="https://geo.nyu.edu/catalog?f%5Bdct_isPartOf_sm%5D%5B%5D=2015+Dublin+LiDAR">2015 Survey of Dublin City</a>
                                 </Credit>
 
                                 <Credit

@@ -75,16 +75,29 @@ var Footer = React.createClass({
 var Thumb = React.createClass({
     render: function() {
         var r = this.props.resource;
-        var tooltip = r.locations.length == 2 ?
-            'Served from NA or EU' :
-            'Served from NA only';
+        var href = '/data/' + r.page + '.html';
 
-        var flags = r.locations.map((v) =>
-            <img
-                className='flag'
-                title={ tooltip }
-                src={ 'resources/icons/' + v + '.svg' }/>
-        );
+        var flags = [
+            <a href={ href }>
+                <img
+                    className='flag'
+                    title='Served from NA'
+                    src='resources/icons/na.svg'
+                />
+            </a>
+        ];
+
+        if (r.eu) {
+            flags = flags.concat(
+                <a href={ href + '?b=http://eu-c.entwine.io' }>
+                    <img
+                        className='flag'
+                        title='Served from EU'
+                        src='resources/icons/eu.svg'
+                    />
+                </a>
+            );
+        }
 
         return <div className='col-xs-6 col-sm-4'>
             <a
@@ -100,31 +113,36 @@ var Thumb = React.createClass({
     }
 });
 
-var Resource = function(name, page, locations) {
+var Resource = function(name, page, eu) {
     this.name = name;
     this.page = page;
-    this.locations = locations || ['na'];
+    this.eu = eu;
 };
 
 var Page = React.createClass({
     render: function() {
-        var eu = ['eu', 'na'];
+        var eu = true;
 
         var resources = [
             new Resource('Denmark', 'denmark', eu),
             new Resource('Railway - France', 'sncf', eu),
             new Resource('Red Rocks Amphitheatre', 'red-rocks', eu),
             new Resource('New Zealand', 'new-zealand'),
-            new Resource('New York City', 'nyc'),
-            new Resource('Iowa', 'iowa'),
+            new Resource('New York City', 'nyc', eu),
+            new Resource('Iowa', 'iowa', eu),
+            new Resource('Kentucky', 'kentucky'),
             new Resource('Lake Isabella', 'lake-isabella', eu),
             new Resource('Washington DC', 'dc'),
             new Resource('Netherlands', 'ahn'),
+            new Resource('Minnesota', 'mn'),
             new Resource('Autzen Stadium', 'autzen', eu),
             new Resource('Vanuatu Village - Nepal', 'vanuatu-village', eu),
+            new Resource('Dublin', 'dublin'),
             new Resource('Half Dome - Yosemite', 'half-dome', eu),
             new Resource('Cedar Falls Bridge - Iowa', 'iowa-bridge', eu),
-            new Resource('Mount St. Helens', 'st-helens', eu)
+            new Resource('Mount St. Helens', 'st-helens', eu),
+            new Resource('Space Shuttle Discovery', 'shuttle', eu),
+            new Resource('Lone Star Geyser', 'lone-star', eu),
         ];
 
         return <div>
@@ -136,17 +154,24 @@ var Page = React.createClass({
                             style={ { paddingBottom: 64 } }
                         >
                             <h2
-                                className='center-block'
+                                className='center-block row'
                                 style={ {
                                     color: '#192854',
                                     paddingTop: 36,
                                     paddingBottom: 24
                                 } }
                             >
-                                Greyhound
+                                Entwine
                                 <span style={ { color: '#39B44A' } }> / </span>
-                                Potree Demo
+                                Potree
                             </h2>
+                            <div className='row'>
+                                <div className='col-xs-12'>
+                                    <small style={ { color: '#888', paddingBottom: 24 } } className='text-right col-xs-12'>
+                                        Use the EU flag links for data served from Frankfurt
+                                    </small>
+                                </div>
+                            </div>
                             {
                                 resources.map((v, i) =>
                                         <Thumb

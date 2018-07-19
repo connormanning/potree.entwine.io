@@ -17,20 +17,22 @@
   <body>
     <script type="text/javascript">
         window.config = {
-            resource: 'iowa-z',
-            material: 'Intensity',
-            intensityGamma: 0.5,
-            pointSize: 3,
+            server: 'cache.greyhound.io',
+            resource: 'houston-15N',
+            // resource: 'houston',
+
+            material: 'Elevation',
+            elevationRange: [-50, 225],
+            classificationFilter: [7],
+            pointSize: 2,
             edlStrength: .1,
+            fov: 80,
             near: 50,
             far: 100000000,
-            pointBudget: 3.5 * 1000 * 1000,
-            position: [-10425779.61, 4695910.56, 845119.01],
-            target: [-10493475.37, 5268520.64, 95421.95]
-
-            // Old Capitol:
-            // position: [-10189978.80, 5109956.30, 558.76],
-            // target: [-10189865.38, 5110394.33, 291.07],
+            pointBudget: 2.5 * 1000 * 1000,
+            position: [-10598331.14, 3431303.70, 26180.43],
+            target: [-10589661.71, 3457244.43, -10923.27],
+            description: '<p>Data courtesy DHS/NGA US Cities program 2010.</p>'
         };
     </script>
 	<script src="../libs/jquery/jquery-3.1.1.min.js" type="text/javascript"></script>
@@ -76,12 +78,7 @@
 		</div>
 		<div id="potree_sidebar_container"></div>
     </div>
-    <script type="text/javascript">
-        new Clipboard('#entwine_copy', { text: () => window.captureUrl() });
-    </script>
-
-    <script type="text/javascript" src="multi.js"></script>
+    <script type="text/javascript" src="script.js"></script>
   </body>
 </html>
-
 

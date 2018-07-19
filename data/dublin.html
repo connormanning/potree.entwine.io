@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="description" content="">
+	<meta name="author" content="">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+	<title>Potree Viewer</title>
+
+	<link rel="stylesheet" type="text/css" href="../build/potree/potree.css">
+	<link rel="stylesheet" type="text/css" href="../libs/jquery-ui/jquery-ui.min.css">
+	<link rel="stylesheet" type="text/css" href="../libs/perfect-scrollbar/css/perfect-scrollbar.css">
+	<link rel="stylesheet" type="text/css" href="../libs/openlayers3/ol.css">
+	<link rel="stylesheet" type="text/css" href="../libs/spectrum/spectrum.css">
+	<link rel="stylesheet" type="text/css" href="../libs/jstree/themes/mixed/style.css">
+    <link rel="stylesheet" href="../css/entwine.css" type="text/css">
+</head>
+<body>
+	<script src="../libs/jquery/jquery-3.1.1.min.js"></script>
+	<script src="../libs/spectrum/spectrum.js"></script>
+	<script src="../libs/perfect-scrollbar/js/perfect-scrollbar.jquery.js"></script>
+	<script src="../libs/jquery-ui/jquery-ui.min.js"></script>
+	<script src="../libs/three.js/build/three.min.js"></script>
+	<script src="../libs/other/BinaryHeap.js"></script>
+	<script src="../libs/tween/tween.min.js"></script>
+	<script src="../libs/d3/d3.js"></script>
+	<script src="../libs/proj4/proj4.js"></script>
+	<script src="../libs/openlayers3/ol.js"></script>
+	<script src="../libs/i18next/i18next.js"></script>
+	<script src="../libs/jstree/jstree.js"></script>
+	<script src="../build/potree/potree.js"></script>
+	<script src="../libs/plasio/js/laslaz.js"></script>
+    <script src="../libs/clipboard.min.js" type="text/javascript"></script>
+    <script type="text/javascript">
+        window.config = {
+            resource: 'dublin',
+            material: Potree.PointColorType.ELEVATION,
+            elevationRange: [0, 60],
+            intensityGamma: 0.7,
+            pos: [-696379.053, 7043723.808, 2945.998],
+            target: [-696536.583, 7046726.399, -803.780],
+            annotations: [{
+                name: "The Custom House",
+                pos: [695997.87, 7047632.67, 2.99],
+                cpos: [-695721.06, 7047420.19, 99.04],
+                ctgt: [-695995.47, 7047667.75, 28.84]
+            }, {
+                name: "Ha'penny Bridge",
+                pos: [-697094.65, 7047264.04, 7.46],
+                cpos: [-697101.78, 7047225.94, 11.60],
+                ctgt: [-697092.83, 7047254.90, 1.50]
+            }, {
+                name: "St. Patrick's Cathedral",
+                pos: [-698111.68, 7046015.04, 8.01],
+                cpos: [-698155.94, 7045960.32, 76.73],
+                ctgt: [-698056.26, 7046021.12, 22.91]
+            }, {
+                name: "Fusiliers' Arch",
+                pos: [-696811.10, 7046029.84, 21.18],
+                cpos: [-696827.48, 7045943.42, 34.72],
+                ctgt: [-696811.57, 7046046.56, 32.19]
+            }, {
+                name: "Dublin Castle",
+                pos: [-697608.59, 7046697.34, 11.19],
+                cpos: [-697334.19, 7046525.17, 123.09],
+                ctgt: [-697484.43, 7046605.17, 55.82]
+            }, {
+                name: "The Four Courts",
+                pos: [-698241.35, 7047147.11, 4.89],
+                cpos: [-698516.75, 7047163.64, 123.41],
+                ctgt: [-698240.92, 7047180.46, 20.85]
+            }]
+        };
+    </script>
+    <div id="potree_container">
+		<div id="potree_render_area"></div>
+		<div id="potree_sidebar_container"></div>
+	</div>
+        <a href="/" id="entwine_logo_container">
+            <img id="entwine_logo" src="/resources/images/entwine-logo.png"/>
+        </a>
+        <img id="entwine_copy" src="/resources/icons/entwine-share.svg"
+            title='Share a link with current view settings'
+            onclick="$('#entwine_copied').show()"
+            onmouseleave="$('#entwine_copied').hide()"
+        />
+        <div id="entwine_copied">Copied shareable link</div>
+    <script type="text/javascript" src="../js/script.js"></script>
+  </body>
+</html>
+
