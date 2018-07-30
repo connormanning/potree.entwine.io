@@ -90,9 +90,13 @@ var Content = React.createClass({
         return <div className='center-block lead row'>
             <div className='col-xs-12 col-sm-2'/>
             <div className='col-xs-12 col-sm-8'>
-<p>
-    This demo gallery demonstrates interconnectivity between the <a href='potree.org'>Potree</a> renderer and <a href='https://entwine.io'>Entwine</a>.  The source code for this repository is available on <a href='https://github.com/connormanning/potree.entwine.io'>GitHub</a>.
-</p>
+                <p>
+                    This demo gallery demonstrates interconnectivity between the
+                    <a href='potree.org'>Potree</a> renderer and
+                    <a href='https://entwine.io'>Entwine</a>.  The source code
+                    for this repository is available on
+                    <a href='https://github.com/connormanning/potree.entwine.io'>GitHub</a>.
+                </p>
             </div>
             <div className='col-xs-12 col-sm-2'/>
         </div>
