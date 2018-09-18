@@ -353,8 +353,22 @@ resources.forEach((path) => {
         }
     }
 
+    // Try getting the name from and EPT specification.
     var name = path.replace('/entwine.json', '').split('/');
     name = name[name.length - 1];
+
+    // If not, try a greyhound specification.
+    if (!name) {
+        var found = path.match(/\/resource\/(.+)/);
+        if (found && found.length > 1) name = found[1];
+    }
+
+    // Finally, fall back to the full path.
+    if (!name) name = path;
+
+    if (name && name[name.length - 1] == '/') {
+        name = name.substr(0, name.length - 1);
+    }
 
     console.log('Loading', name, path);
 
