@@ -5312,6 +5312,16 @@ Potree.EptLazBatcher = class {
             Potree.workerPool.returnWorker(workerPath, worker);
         };
 
+        var getQueryParam = function(name) {
+            name = name.replace(/[\[\]]/g, "\\$&");
+            var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+                results = regex.exec(window.location.href);
+            if (!results || !results[2]) return null;
+            return decodeURIComponent(results[2].replace(/\+/g, " "));
+        }
+
+        var minint = getQueryParam('minint');
+
         let message = {
             buffer: las.arrayb,
             numPoints: las.pointsCount,
@@ -5320,7 +5330,8 @@ Potree.EptLazBatcher = class {
             scale: las.scale,
             offset: las.offset,
             mins: las.mins,
-            maxs: las.maxs
+            maxs: las.maxs,
+            minint: minint
         };
 
         worker.postMessage(message, [message.buffer]);

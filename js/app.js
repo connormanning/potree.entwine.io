@@ -89,7 +89,7 @@ var Thumb = React.createClass({
 
         if (r.eu) {
             flags = flags.concat(
-                <a href={ href + '?b=http://eu-c.entwine.io' }>
+                <a href={ href + '?location=eu-c.entwine.io' }>
                     <img
                         className='flag'
                         title='Served from EU'
@@ -135,6 +135,7 @@ var Page = React.createClass({
             new Resource('Washington DC', 'dc'),
             new Resource('Netherlands', 'ahn'),
             new Resource('Minnesota', 'mn'),
+            new Resource('Iowa Beer Caves', 'beer-caves'),
             new Resource('Autzen Stadium', 'autzen', eu),
             new Resource('Vanuatu Village - Nepal', 'vanuatu-village', eu),
             new Resource('Dublin', 'dublin'),

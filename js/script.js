@@ -1,5 +1,5 @@
 var maybeParse = function(key, val) {
-    if (['r', 'resource', 'b', 'base'].includes(key)) {
+    if (['r', 'resource', 'location'].includes(key)) {
         if (val[0] == '[') return JSON.parse(val);
         if (val[0] != '"') return val;
     }
@@ -15,6 +15,8 @@ var getQueryParam = function(name) {
 
     return maybeParse(name, decodeURIComponent(results[2].replace(/\+/g, ' ')));
 }
+
+var minint = getQueryParam('minint');
 
 window.viewer = new Potree.Viewer(
         document.getElementById('potree_render_area'));
@@ -34,7 +36,8 @@ var defaults = {
     opacity: 1,
     rgbGamma: 1, rgbContrast: 0, rgbBrightness: 0,
     intensityGamma: 1, intensityContrast: 0, intensityBrightness: 0,
-    classificationFilter: []
+    classificationFilter: [],
+    intensityRange: [minint ? minint : 0, 256]
 };
 
 var config = window.config;
@@ -96,7 +99,8 @@ var get = () => {
 
         // For these, only include them if they are query overrides.
         r: getQueryParam('r') || getQueryParam('resource'),
-        b: getQueryParam('b') || getQueryParam('base')
+
+        minint: getQueryParam('minint') || null
     };
 
     return Object.keys(state).reduce((p, k) => {
@@ -207,10 +211,11 @@ var set = (k, v) => {
             viewer.setDescription(v);
             break;
         case 'resource': case 'r':
-        case 'base': case 'b':
+        case 'location':
         case 'near': case 'far':
         case 'debug':
         case 'annotations':
+        case 'minint':
             // Handled elsewhere.
             break;
         default:
@@ -301,9 +306,11 @@ var init = (name) => {
 
         var q = '';
         var r = getQueryParam('r') || getQueryParam('resource');
-        var b = getQueryParam('b') || getQueryParam('base');
+        var loc = getQueryParam('location');
+        var minint = getQueryParam('minint');
         if (r) q += (q ? '&' : '?') + 'r=' + JSON.stringify(r);
-        if (b) q += (q ? '&' : '?') + 'b=' + JSON.stringify(b);
+        if (loc) q += (q ? '&' : '?') + 'location=' + JSON.stringify(loc);
+        if (minint) q += (q ? '&' : '?') + 'minint=' + JSON.stringify(minint);
 
         history.replaceState(null, null, location.pathname + q);
 
@@ -328,19 +335,22 @@ var init = (name) => {
 var loaded = 0;
 
 var http = 'http';
-var base = 'http://na-c.entwine.io/'
-if (getQueryParam('b')) {
-    base = getQueryParam('b');
-    if (base[base.length - 1] != '/') base += '/';
-}
-
-var post = 'entwine.json';
+var postfix = 'entwine.json';
+var loc = getQueryParam('location');
 
 resources.forEach((path) => {
-    if (path.substring(0, http.length) != http) path = base + path;
-    if (path.indexOf(post) == -1) {
+    if (loc) path = path.replace('na-c.entwine.io', loc);
+
+    if (path.indexOf('greyhound://') != -1) {
         if (path[path.length - 1] != '/') path += '/';
-        path += post;
+    }
+    else if (path.indexOf(postfix) == -1) {
+        if (path[path.length - 1] != '/') path += '/';
+        path += postfix;
+
+        if (path.indexOf('://') == -1) {
+            path = 'http://' + path;
+        }
     }
 
     var name = path.replace('/entwine.json', '').split('/');
@@ -404,6 +414,7 @@ new Clipboard('#entwine_copy', {
             return p + (p.length ? '&' : '?') +
                 k + '=' + JSON.stringify(state[k]);
         }, '');
+
         return window.location.origin + window.location.pathname + encodeURI(q);
     }
 });

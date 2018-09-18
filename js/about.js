@@ -91,11 +91,7 @@ var Content = React.createClass({
             <div className='col-xs-12 col-sm-2'/>
             <div className='col-xs-12 col-sm-8'>
                 <p>
-                    This demo gallery demonstrates interconnectivity between the
-                    <a href='potree.org'>Potree</a> renderer and
-                    <a href='https://entwine.io'>Entwine</a>.  The source code
-                    for this repository is available on
-                    <a href='https://github.com/connormanning/potree.entwine.io'>GitHub</a>.
+                    This demo gallery demonstrates interconnectivity between the <a href='potree.org'>Potree</a> renderer and <a href='https://entwine.io'>Entwine</a>.  The source code for this repository is available on <a href='https://github.com/connormanning/potree.entwine.io'>GitHub</a>.
                 </p>
             </div>
             <div className='col-xs-12 col-sm-2'/>
@@ -159,7 +155,10 @@ var Page = React.createClass({
                                 </Credit>
 
                                 <Credit name='Dublin'>
-                                    NYU Research Data, <a href="https://geo.nyu.edu/catalog?f%5Bdct_isPartOf_sm%5D%5B%5D=2015+Dublin+LiDAR">2015 Survey of Dublin City</a>
+                                    <div>
+                                    Laefer, D. F., Abuwarda, S., Anh-Vu Vo, Truong-Hong, L., & Gharibi, H. (2017). 2015 Aerial Laser and Photogrammetry Datasets for Dublin, Ireland’s City Center. New York University. Center for Urban Science and Progress.
+                                    </div>
+                                    <a href="https://doi.org/10.17609/n8mq0n">2015 Survey of Dublin City</a>
                                 </Credit>
 
                                 <Credit

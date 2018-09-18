@@ -10,6 +10,7 @@ function readUsingDataView(event) {
 
     let sourceUint8 = new Uint8Array(buffer);
     let sourceView = new DataView(buffer);
+    let minint = event.data.minint;
 
     let tightBoundingBox = {
         min: [
@@ -68,10 +69,6 @@ function readUsingDataView(event) {
         y = uy * scale[1] + offset[1] - event.data.mins[1];
         z = uz * scale[2] + offset[2] - event.data.mins[2];
 
-        positions[3 * i + 0] = x;
-        positions[3 * i + 1] = y;
-        positions[3 * i + 2] = z;
-
         mean[0] += x / numPoints;
         mean[1] += y / numPoints;
         mean[2] += z / numPoints;
@@ -120,6 +117,17 @@ function readUsingDataView(event) {
             colors[4 * i + 1] = g;
             colors[4 * i + 2] = b;
             colors[4 * i + 3] = 255;
+        }
+
+        if (minint && intensity < minint) {
+            positions[3 * i + 0] = 999999;
+            positions[3 * i + 1] = 999999;
+            positions[3 * i + 2] = 999999;
+        }
+        else {
+            positions[3 * i + 0] = x;
+            positions[3 * i + 1] = y;
+            positions[3 * i + 2] = z;
         }
     }
 
