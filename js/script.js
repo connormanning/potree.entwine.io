@@ -335,7 +335,7 @@ var init = (name) => {
 var loaded = 0;
 
 var http = 'http';
-var postfix = 'entwine.json';
+var postfix = 'ept.json';
 var loc = getQueryParam('location');
 
 resources.forEach((path) => {
@@ -354,7 +354,7 @@ resources.forEach((path) => {
     }
 
     // Try getting the name from and EPT specification.
-    var name = path.replace('/entwine.json', '').split('/');
+    var name = path.replace('/ept.json', '').split('/');
     name = name[name.length - 1];
 
     // If not, try a greyhound specification.

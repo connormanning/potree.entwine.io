@@ -10,7 +10,6 @@ function readUsingDataView(event) {
 
     let sourceUint8 = new Uint8Array(buffer);
     let sourceView = new DataView(buffer);
-    let minint = event.data.minint;
 
     let tightBoundingBox = {
         min: [
@@ -51,10 +50,12 @@ function readUsingDataView(event) {
     // TODO This should be cached per-resource since this is an expensive check.
     let twoByteColor = false;
     if (hasColor) {
+        let r, g, b, pos;
         for (let i = 0; i < numPoints && !twoByteColor; ++i) {
-            let r = sourceView.getUint16(i * pointSize + co, true)
-            let g = sourceView.getUint16(i * pointSize + co + 2, true)
-            let b = sourceView.getUint16(i * pointSize + co + 4, true)
+            pos = i * pointSize;
+            r = sourceView.getUint16(pos + co, true)
+            g = sourceView.getUint16(pos + co + 2, true)
+            b = sourceView.getUint16(pos + co + 4, true)
             if (r > 255 || g > 255 || b > 255) twoByteColor = true;
         }
     }
@@ -68,6 +69,10 @@ function readUsingDataView(event) {
         x = ux * scale[0] + offset[0] - event.data.mins[0];
         y = uy * scale[1] + offset[1] - event.data.mins[1];
         z = uz * scale[2] + offset[2] - event.data.mins[2];
+
+        positions[3 * i + 0] = x;
+        positions[3 * i + 1] = y;
+        positions[3 * i + 2] = z;
 
         mean[0] += x / numPoints;
         mean[1] += y / numPoints;
@@ -118,17 +123,6 @@ function readUsingDataView(event) {
             colors[4 * i + 2] = b;
             colors[4 * i + 3] = 255;
         }
-
-        if (minint && intensity < minint) {
-            positions[3 * i + 0] = 999999;
-            positions[3 * i + 1] = 999999;
-            positions[3 * i + 2] = 999999;
-        }
-        else {
-            positions[3 * i + 0] = x;
-            positions[3 * i + 1] = y;
-            positions[3 * i + 2] = z;
-        }
     }
 
     let indices = new ArrayBuffer(numPoints * 4);
@@ -175,6 +169,8 @@ function readUsingDataView(event) {
 
     postMessage(message, transferables);
 };
+
+
 
 onmessage = readUsingDataView;
 

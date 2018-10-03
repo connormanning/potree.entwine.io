@@ -413,7 +413,7 @@ Potree.loadPointCloud = function (path, name, callback) {
 	// load pointcloud
 	if (!path) {
 		// TODO: callback? comment? Hello? Bueller? Anyone?
-	} else if (path.indexOf('entwine.json') > 0) {
+	} else if (path.indexOf('ept.json') > 0) {
         Potree.EptLoader.load(path, function(geometry) {
             if (!geometry) {
                 failed();
@@ -4878,50 +4878,26 @@ Potree.GreyhoundLoader.createChildAABB = function (aabb, childIndex) {
 };
 
 /**
- * @class Loads mno files and returns a PointcloudOctree
- * for a description of the mno binary file format, read mnoFileFormat.txt
- *
- * @author Markus Schuetz
+ * @author Connor Manning
  */
 
-class EptUtils {
-    static get(url) {
-        return new Promise((resolve, reject) => {
-            let xhr = Potree.XHRFactory.createXMLHttpRequest();
-            xhr.open('GET', url, true);
-            xhr.onreadystatechange = function() {
-                if (xhr.readyState === 4) {
-                    if (xhr.status === 200 || xhr.status === 0) {
-                        resolve(xhr.responseText);
-                    }
-                    else {
-                        reject(xhr.responseText);
-                    }
-                }
-            };
-            xhr.send(null);
-        });
-    }
-
-    static getJson(url) {
-        return EptUtils.get(url).then((data) => JSON.parse(data));
-    }
-};
-
 Potree.EptLoader = class {
-    static load(file, callback) {
-        EptUtils.getJson(file)
-        .then((info) => {
-            let url = file.substr(0, file.lastIndexOf('entwine.json'));
-            let geometry = new Potree.PointCloudEptGeometry(url, info);
-            let root = new Potree.PointCloudEptGeometryNode(geometry);
 
-            geometry.root = root;
-            geometry.root.load();
+	static async load(file, callback) {
 
-            callback(geometry);
-        });
-    }
+		let response = await fetch(file);
+		let json = await response.json();
+
+		let url = file.substr(0, file.lastIndexOf('ept.json'));
+		let geometry = new Potree.PointCloudEptGeometry(url, json);
+		let root = new Potree.PointCloudEptGeometryNode(geometry);
+
+		geometry.root = root;
+		geometry.root.load();
+
+		callback(geometry);
+	}
+
 };
 
 
@@ -5158,6 +5134,111 @@ Potree.LasLazBatcher = class LasLazBatcher {
 	};
 };
 
+Potree.EptBinaryLoader = class {
+    load(node) {
+        if (node.loaded) return;
+
+        let url = node.url() + '.bin';
+
+        let xhr = Potree.XHRFactory.createXMLHttpRequest();
+        xhr.open('GET', url, true);
+        xhr.responseType = 'arraybuffer';
+        xhr.overrideMimeType('text/plain; charset=x-user-defined');
+        xhr.onreadystatechange = () => {
+            if (xhr.readyState === 4) {
+                if (xhr.status === 200) {
+                    let buffer = xhr.response;
+                    this.parse(node, buffer);
+                } else {
+                    console.log('Failed ' + url + ': ' + xhr.status);
+                }
+            }
+        };
+
+        try {
+            xhr.send(null);
+        }
+        catch (e) {
+            console.log('Failed request: ' + e);
+        }
+    }
+
+    parse(node, buffer) {
+        let workerPath = Potree.scriptPath +
+            '/workers/EptBinaryDecoderWorker.js';
+        let worker = Potree.workerPool.getWorker(workerPath);
+
+        worker.onmessage = function(e) {
+            let g = new THREE.BufferGeometry();
+            let numPoints = e.data.numPoints;
+
+            let position = new Float32Array(e.data.position);
+            g.addAttribute('position', new THREE.BufferAttribute(position, 3));
+
+            let indices = new Uint8Array(e.data.indices);
+            g.addAttribute('indices', new THREE.BufferAttribute(indices, 4));
+
+            if (e.data.color) {
+                let color = new Uint8Array(e.data.color);
+                g.addAttribute('color',
+                        new THREE.BufferAttribute(color, 4, true));
+            }
+            if (e.data.intensity) {
+                let intensity = new Float32Array(e.data.intensity);
+                g.addAttribute('intensity',
+                        new THREE.BufferAttribute(intensity, 1));
+            }
+            if (e.data.classification) {
+                let classification = new Uint8Array(e.data.classification);
+                g.addAttribute('classification',
+                        new THREE.BufferAttribute(classification, 1));
+            }
+            if (e.data.returnNumber) {
+                let returnNumber = new Uint8Array(e.data.returnNumber);
+                g.addAttribute('returnNumber',
+                        new THREE.BufferAttribute(returnNumber, 1));
+            }
+            if (e.data.numberOfReturns) {
+                let numberOfReturns = new Uint8Array(e.data.numberOfReturns);
+                g.addAttribute('numberOfReturns',
+                        new THREE.BufferAttribute(numberOfReturns, 1));
+            }
+            if (e.data.pointSourceId) {
+                let pointSourceId = new Uint16Array(e.data.pointSourceId);
+                g.addAttribute('pointSourceID',
+                        new THREE.BufferAttribute(pointSourceId, 1));
+            }
+
+            g.attributes.indices.normalized = true;
+
+            let tightBoundingBox = new THREE.Box3(
+                new THREE.Vector3().fromArray(e.data.tightBoundingBox.min),
+                new THREE.Vector3().fromArray(e.data.tightBoundingBox.max)
+            );
+
+            node.doneLoading(
+                    g,
+                    tightBoundingBox,
+                    numPoints,
+                    new THREE.Vector3(...e.data.mean));
+
+            Potree.workerPool.returnWorker(workerPath, worker);
+        };
+
+        let toArray = (v) => [v.x, v.y, v.z];
+        let message = {
+            buffer: buffer,
+            schema: node.ept.schema,
+            scale: node.ept.eptScale,
+            offset: node.ept.eptOffset,
+            mins: toArray(node.key.b.min)
+        };
+
+        worker.postMessage(message, [message.buffer]);
+    }
+};
+
+
 /**
  * laslaz code taken and adapted from plas.io js-laslaz
  *    http://plas.io/
@@ -5167,14 +5248,11 @@ Potree.LasLazBatcher = class LasLazBatcher {
  *
  */
 
-Potree.EptLazLoader = class {
-    constructor() { }
-    static progressCB () { }
-
+Potree.EptLaszipLoader = class {
     load(node) {
         if (node.loaded) return;
 
-        let url = node.url() + '.laz';   // TODO Get from info.dataStorage.
+        let url = node.url() + '.laz';
 
         let xhr = Potree.XHRFactory.createXMLHttpRequest();
         xhr.open('GET', url, true);
@@ -5262,7 +5340,8 @@ Potree.EptLazBatcher = class {
     constructor(node) { this.node = node; }
 
     push(las) {
-        let workerPath = Potree.scriptPath + '/workers/EptDecoderWorker.js';
+        let workerPath = Potree.scriptPath +
+			'/workers/EptLaszipDecoderWorker.js';
         let worker = Potree.workerPool.getWorker(workerPath);
 
         worker.onmessage = (e) => {
@@ -5312,16 +5391,6 @@ Potree.EptLazBatcher = class {
             Potree.workerPool.returnWorker(workerPath, worker);
         };
 
-        var getQueryParam = function(name) {
-            name = name.replace(/[\[\]]/g, "\\$&");
-            var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
-                results = regex.exec(window.location.href);
-            if (!results || !results[2]) return null;
-            return decodeURIComponent(results[2].replace(/\+/g, " "));
-        }
-
-        var minint = getQueryParam('minint');
-
         let message = {
             buffer: las.arrayb,
             numPoints: las.pointsCount,
@@ -5330,8 +5399,7 @@ Potree.EptLazBatcher = class {
             scale: las.scale,
             offset: las.offset,
             mins: las.mins,
-            maxs: las.maxs,
-            minint: minint
+            maxs: las.maxs
         };
 
         worker.postMessage(message, [message.buffer]);
@@ -11437,301 +11505,302 @@ Potree.PointCloudGreyhoundGeometryNode.prototype.dispose = function () {
 Object.assign(Potree.PointCloudGreyhoundGeometryNode.prototype, THREE.EventDispatcher.prototype);
 
 var toVector3 = function(v, offset) {
-    return new THREE.Vector3().fromArray(v, offset || 0);
+	return new THREE.Vector3().fromArray(v, offset || 0);
 }
 
 var toBox3 = function(b) {
-    return new THREE.Box3(this.toVector3(b), this.toVector3(b, 3));
+	return new THREE.Box3(this.toVector3(b), this.toVector3(b, 3));
 };
 
 var toArray = function(b) {
-    return [b.min.x, b.min.y, b.min.z, b.max.x, b.max.y, b.max.z];
+	return [b.min.x, b.min.y, b.min.z, b.max.x, b.max.y, b.max.z];
+}
+
+var findDim = function(schema, name) {
+    var dim = schema.find((dim) => dim.name == name);
+    if (!dim) throw new Error('Failed to find ' + name + ' in schema');
 }
 
 Potree.PointCloudEptGeometry = class {
-    constructor(url, info) {
-        let version = info.version;
-        let schema = info.schema;
-        let bounds = info.bounds;
-        let boundsConforming = info.boundsConforming;
+	constructor(url, info) {
+		let version = info.version;
+		let schema = info.schema;
+		let bounds = info.bounds;
+		let boundsConforming = info.boundsConforming;
 
-        // TODO This is unused.
-        let offset = info.offset || [0, 0, 0];
-        let scale = info.scale || 0.01;
-        if (Array.isArray(scale)) {
-            scale = Math.min(scale[0], scale[1], scale[2]);
+        let xyz = [find(schema, 'X'), find(schema, 'Y'), find(schema, 'Z')];
+        let scale = xyz.map((d) => d.scale || 1);
+        let offset = xyz.map((d) => d.offset || 0);
+
+		this.eptScale = toVector3(scale);
+		this.eptOffset = toVector3(offset);
+
+		this.url = url;
+		this.info = info;
+		this.type = 'ept';
+
+		this.schema = schema;
+		this.ticks = info.ticks;
+		this.boundingBox = toBox3(bounds);
+		this.tightBoundingBox = toBox3(boundsConforming);
+		this.offset = toVector3([0, 0, 0]);
+		this.boundingSphere = this.boundingBox.getBoundingSphere();
+		this.tightBoundingSphere = this.tightBoundingBox.getBoundingSphere();
+		this.version = new Potree.Version('1.6');
+
+        if (info.srs && info.srs.horizontal) {
+            this.projection = info.srs.authority + ':' + info.srs.horizontal;
         }
+		this.pointAttributes = 'LAZ';
+		this.spacing =
+			(this.boundingBox.max.x - this.boundingBox.min.x) / this.ticks;
 
-        let dataStorage = info.dataStorage || 'laz';
-        let hierarchyStorage = info.hierarchyStorage || 'json';
+		let hierarchyType = info.hierarchyType || 'json';
+		this.hierarchyStep = info.hierarchyStep || 0;
 
-        // Now convert to three.js types.
-        bounds = toBox3(bounds);
-        boundsConforming = toBox3(boundsConforming);
-        offset = toVector3(offset);     // TODO
-        offset = bounds.min.clone();
-        offset = toVector3([0, 0, 0]);  // TODO
-
-        bounds.min.sub(offset);
-        bounds.max.sub(offset);
-        boundsConforming.min.sub(offset);
-        boundsConforming.max.sub(offset);
-
-        this.url = url;
-        this.info = info;
-
-        this.ticks = info.ticks;
-        this.boundingBox = bounds;
-        this.offset = offset;
-        this.tightBoundingBox = boundsConforming;
-        this.boundingSphere = this.boundingBox.getBoundingSphere();
-        this.tightBoundingSphere = this.tightBoundingBox.getBoundingSphere();
-        this.version = new Potree.Version('1.6');
-
-        this.projection = info.srs;
-        this.pointAttributes = 'LAZ';
-        this.spacing =
-            (this.boundingBox.max.x - this.boundingBox.min.x) / this.ticks;
-
-        // TODO Switch on storage type.
-        this.loader = new Potree.EptLazLoader();
-        this.hierarchyStep = info.hierarchyStep || 0;
-    }
+		let dataType = info.dataType || 'laszip';
+		this.loader = dataType == 'binary'
+			? new Potree.EptBinaryLoader()
+			: new Potree.EptLaszipLoader();
+	}
 };
 
 Potree.EptKey = class {
-    constructor(ept, b, d, x, y, z) {
-        this.ept = ept;
-        this.b = b;
-        this.d = d;
-        this.x = x || 0;
-        this.y = y || 0;
-        this.z = z || 0;
-    }
+	constructor(ept, b, d, x, y, z) {
+		this.ept = ept;
+		this.b = b;
+		this.d = d;
+		this.x = x || 0;
+		this.y = y || 0;
+		this.z = z || 0;
+	}
 
-    name() {
-        return this.d + '-' + this.x + '-' + this.y + '-' + this.z;
-    }
+	name() {
+		return this.d + '-' + this.x + '-' + this.y + '-' + this.z;
+	}
 
-    step(a, b, c) {
-        let min = this.b.min.clone();
-        let max = this.b.max.clone();
-        let dst = new THREE.Vector3().subVectors(max, min);
+	step(a, b, c) {
+		let min = this.b.min.clone();
+		let max = this.b.max.clone();
+		let dst = new THREE.Vector3().subVectors(max, min);
 
-        if (a)  min.x += dst.x / 2;
-        else    max.x -= dst.x / 2;
+		if (a)  min.x += dst.x / 2;
+		else	max.x -= dst.x / 2;
 
-        if (b)  min.y += dst.y / 2;
-        else    max.y -= dst.y / 2;
+		if (b)  min.y += dst.y / 2;
+		else	max.y -= dst.y / 2;
 
-        if (c)  min.z += dst.z / 2;
-        else    max.z -= dst.z / 2;
+		if (c)  min.z += dst.z / 2;
+		else	max.z -= dst.z / 2;
 
-        return new Potree.EptKey(
-                this.ept,
-                new THREE.Box3(min, max),
-                this.d + 1,
-                this.x * 2 + a,
-                this.y * 2 + b,
-                this.z * 2 + c);
-    }
+		return new Potree.EptKey(
+				this.ept,
+				new THREE.Box3(min, max),
+				this.d + 1,
+				this.x * 2 + a,
+				this.y * 2 + b,
+				this.z * 2 + c);
+	}
 
-    children() {
-        var result = [];
-        for (var a = 0; a < 2; ++a) {
-            for (var b = 0; b < 2; ++b) {
-                for (var c = 0; c < 2; ++c) {
-                    var add = this.step(a, b, c).name();
-                    if (!result.includes(add)) result = result.concat(add);
-                }
-            }
-        }
-        return result;
-    }
+	children() {
+		var result = [];
+		for (var a = 0; a < 2; ++a) {
+			for (var b = 0; b < 2; ++b) {
+				for (var c = 0; c < 2; ++c) {
+					var add = this.step(a, b, c).name();
+					if (!result.includes(add)) result = result.concat(add);
+				}
+			}
+		}
+		return result;
+	}
 }
 
 Potree.PointCloudEptGeometryNode = class extends Potree.PointCloudTreeNode {
-    constructor(ept, b, d, x, y, z) {
-        super();
+	constructor(ept, b, d, x, y, z) {
+		super();
 
-        this.ept = ept;
-        this.key = new Potree.EptKey(
-                this.ept,
-                b || this.ept.boundingBox,
-                d || 0,
-                x,
-                y,
-                z);
+		this.ept = ept;
+		this.key = new Potree.EptKey(
+				this.ept,
+				b || this.ept.boundingBox,
+				d || 0,
+				x,
+				y,
+				z);
 
-        this.id = Potree.PointCloudEptGeometryNode.NextId++;
-        this.geometry = null;
-        this.boundingBox = this.key.b;
-        this.tightBoundingBox = this.boundingBox;
-        this.spacing = this.ept.spacing / Math.pow(2, this.key.d);
-        this.boundingSphere = this.boundingBox.getBoundingSphere();
+		this.id = Potree.PointCloudEptGeometryNode.NextId++;
+		this.geometry = null;
+		this.boundingBox = this.key.b;
+		this.tightBoundingBox = this.boundingBox;
+		this.spacing = this.ept.spacing / Math.pow(2, this.key.d);
+		this.boundingSphere = this.boundingBox.getBoundingSphere();
 
-        // These are set during hierarchy loading.
-        this.hasChildren = false;
-        this.children = { };
-        this.numPoints = 0;
+		// These are set during hierarchy loading.
+		this.hasChildren = false;
+		this.children = { };
+		this.numPoints = 0;
 
-        this.level = this.key.d;
-        this.loaded = false;
-        this.loading = false;
-        this.oneTimeDisposeHandlers = [];
+		this.level = this.key.d;
+		this.loaded = false;
+		this.loading = false;
+		this.oneTimeDisposeHandlers = [];
 
-        let k = this.key;
-        this.name = this.toPotreeName(k.d, k.x, k.y, k.z);
-        this.index = parseInt(this.name.charAt(this.name.length - 1));
-    }
+		let k = this.key;
+		this.name = this.toPotreeName(k.d, k.x, k.y, k.z);
+		this.index = parseInt(this.name.charAt(this.name.length - 1));
+	}
 
-    isGeometryNode() { return true; }
-    getLevel() { return this.level; }
-    isTreeNode() { return false; }
-    isLoaded() { return this.loaded; }
-    getBoundingSphere() { return this.boundingSphere; }
-    getBoundingBox() { return this.boundingBox; }
-    url() { return this.ept.url + this.filename(); }
-    getNumPoints() { return this.numPoints; }
+	isGeometryNode() { return true; }
+	getLevel() { return this.level; }
+	isTreeNode() { return false; }
+	isLoaded() { return this.loaded; }
+	getBoundingSphere() { return this.boundingSphere; }
+	getBoundingBox() { return this.boundingBox; }
+	url() { return this.ept.url + this.filename(); }
+	getNumPoints() { return this.numPoints; }
 
-    filename() { return this.key.name(); }
+	filename() { return this.key.name(); }
 
-    getChildren() {
-        let children = [];
+	getChildren() {
+		let children = [];
 
-        for (let i = 0; i < 8; i++) {
-            if (this.children[i]) {
-                children.push(this.children[i]);
-            }
-        }
+		for (let i = 0; i < 8; i++) {
+			if (this.children[i]) {
+				children.push(this.children[i]);
+			}
+		}
 
-        return children;
-    }
+		return children;
+	}
 
-    addChild(child) {
-        this.children[child.index] = child;
-        child.parent = this;
-    }
+	addChild(child) {
+		this.children[child.index] = child;
+		child.parent = this;
+	}
 
-    load() {
-        if (this.loaded || this.loading) return;
-        if (Potree.numNodesLoading >= Potree.maxNodesLoading) return;
+	load() {
+		if (this.loaded || this.loading) return;
+		if (Potree.numNodesLoading >= Potree.maxNodesLoading) return;
 
-        this.loading = true;
-        ++Potree.numNodesLoading;
+		this.loading = true;
+		++Potree.numNodesLoading;
 
-        let hs = this.ept.hierarchyStep;
-        if (!this.key.d || (hs && (this.key.d % hs == 0) && this.hasChildren)) {
-            this.loadHierarchy();
-        }
-        this.loadPoints();
-    }
+		let hs = this.ept.hierarchyStep;
+		if (!this.key.d || (hs && (this.key.d % hs == 0) && this.hasChildren)) {
+			this.loadHierarchy();
+		}
+		this.loadPoints();
+	}
 
-    loadPoints(){
-        this.ept.loader.load(this);
-    }
+	loadPoints(){
+		this.ept.loader.load(this);
+	}
 
-    loadHierarchy() {
-        let nodes = { };
-        nodes[this.filename()] = this;
-        this.hasChildren = false;
+	async loadHierarchy() {
+		let nodes = { };
+		nodes[this.filename()] = this;
+		this.hasChildren = false;
 
-        EptUtils.getJson(this.ept.url + 'h/' + this.filename() + '.json')
-        .then((hier) => {
-            // Since we want to traverse top-down, and 10 comes
-            // lexicographically before 9 (for example), do a deep sort.
-            var keys = Object.keys(hier).sort((a, b) => {
-                let [da, xa, ya, za] = a.split('-').map((n) => parseInt(n, 10));
-                let [db, xb, yb, zb] = b.split('-').map((n) => parseInt(n, 10));
-                if (da < db) return -1; if (da > db) return 1;
-                if (xa < xb) return -1; if (xa > xb) return 1;
-                if (ya < yb) return -1; if (ya > yb) return 1;
-                if (za < zb) return -1; if (za > zb) return 1;
-                return 0;
-            });
+		let eptHierarchyFile =
+            `${this.ept.url}ept-hierarchy/${this.filename()}.json`;
 
-            keys.forEach((v) => {
-                let [d, x, y, z] = v.split('-').map((n) => parseInt(n, 10));
-                let a = x & 1, b = y & 1, c = z & 1;
-                let parentName =
-                    (d - 1) + '-' + (x >> 1) + '-' + (y >> 1) + '-' + (z >> 1);
+		let response = await fetch(eptHierarchyFile);
+		let hier = await response.json();
 
-                let parentNode = nodes[parentName];
-                if (!parentNode) return;
-                parentNode.hasChildren = true;
+		// Since we want to traverse top-down, and 10 comes
+		// lexicographically before 9 (for example), do a deep sort.
+		var keys = Object.keys(hier).sort((a, b) => {
+			let [da, xa, ya, za] = a.split('-').map((n) => parseInt(n, 10));
+			let [db, xb, yb, zb] = b.split('-').map((n) => parseInt(n, 10));
+			if (da < db) return -1; if (da > db) return 1;
+			if (xa < xb) return -1; if (xa > xb) return 1;
+			if (ya < yb) return -1; if (ya > yb) return 1;
+			if (za < zb) return -1; if (za > zb) return 1;
+			return 0;
+		});
 
-                let key = parentNode.key.step(a, b, c);
+		keys.forEach((v) => {
+			let [d, x, y, z] = v.split('-').map((n) => parseInt(n, 10));
+			let a = x & 1, b = y & 1, c = z & 1;
+			let parentName =
+				(d - 1) + '-' + (x >> 1) + '-' + (y >> 1) + '-' + (z >> 1);
 
-                let node = new Potree.PointCloudEptGeometryNode(
-                        this.ept,
-                        key.b,
-                        key.d,
-                        key.x,
-                        key.y,
-                        key.z);
+			let parentNode = nodes[parentName];
+			if (!parentNode) return;
+			parentNode.hasChildren = true;
 
-                node.level = d;
-                node.numPoints = hier[v];
+			let key = parentNode.key.step(a, b, c);
 
-                let hs = this.ept.hierarchyStep;
-                if (hs && d % hs == 0) node.hasChildren = true;
+			let node = new Potree.PointCloudEptGeometryNode(
+					this.ept,
+					key.b,
+					key.d,
+					key.x,
+					key.y,
+					key.z);
 
-                parentNode.addChild(node);
-                nodes[key.name()] = node;
-            });
-        });
-    }
+			node.level = d;
+			node.numPoints = hier[v];
 
-    doneLoading(bufferGeometry, tightBoundingBox, np, mean) {
-        bufferGeometry.boundingBox = this.boundingBox;
-        this.geometry = bufferGeometry;
-        this.tightBoundingBox = tightBoundingBox;
-        this.numPoints = np;
-        this.mean = mean;
-        this.loaded = true;
-        this.loading = false;
-        --Potree.numNodesLoading;
-    }
+			let hs = this.ept.hierarchyStep;
+			if (hs && d % hs == 0) node.hasChildren = true;
 
-    toPotreeName(d, x, y, z) {
-        var name = 'r';
+			parentNode.addChild(node);
+			nodes[key.name()] = node;
+		});
+	}
 
-        for (var i = 0; i < d; ++i) {
-            var shift = d - i - 1;
-            var mask = 1 << shift;
-            var step = 0;
+	doneLoading(bufferGeometry, tightBoundingBox, np, mean) {
+		bufferGeometry.boundingBox = this.boundingBox;
+		this.geometry = bufferGeometry;
+		this.tightBoundingBox = tightBoundingBox;
+		this.numPoints = np;
+		this.mean = mean;
+		this.loaded = true;
+		this.loading = false;
+		--Potree.numNodesLoading;
+	}
 
-            if (x & mask) step += 4;
-            if (y & mask) step += 2;
-            if (z & mask) step += 1;
+	toPotreeName(d, x, y, z) {
+		var name = 'r';
 
-            name += step;
-        }
+		for (var i = 0; i < d; ++i) {
+			var shift = d - i - 1;
+			var mask = 1 << shift;
+			var step = 0;
 
-        return name;
-    }
+			if (x & mask) step += 4;
+			if (y & mask) step += 2;
+			if (z & mask) step += 1;
 
-    dispose() {
-        if (this.geometry && this.parent != null) {
-            this.geometry.dispose();
-            this.geometry = null;
-            this.loaded = false;
+			name += step;
+		}
 
-            // this.dispatchEvent( { type: 'dispose' } );
-            for (let i = 0; i < this.oneTimeDisposeHandlers.length; i++) {
-                let handler = this.oneTimeDisposeHandlers[i];
-                handler();
-            }
-            this.oneTimeDisposeHandlers = [];
-        }
-    }
+		return name;
+	}
+
+	dispose() {
+		if (this.geometry && this.parent != null) {
+			this.geometry.dispose();
+			this.geometry = null;
+			this.loaded = false;
+
+			// this.dispatchEvent( { type: 'dispose' } );
+			for (let i = 0; i < this.oneTimeDisposeHandlers.length; i++) {
+				let handler = this.oneTimeDisposeHandlers[i];
+				handler();
+			}
+			this.oneTimeDisposeHandlers = [];
+		}
+	}
 }
 
 Potree.PointCloudEptGeometryNode.NextId = 0;
 
 Object.assign(
-        Potree.PointCloudEptGeometryNode.prototype,
-        THREE.EventDispatcher.prototype);
+		Potree.PointCloudEptGeometryNode.prototype,
+		THREE.EventDispatcher.prototype);
 
 
 
@@ -22165,6 +22234,7 @@ Potree.MapView = class {
 			constrainResolution: false
 		});
 
+		if (pointcloud.pcoGeometry.type == 'ept') return;
 		let url = pointcloud.pcoGeometry.url + '/../sources.json';
 		$.getJSON(url, (data) => {
 			let sources = data.sources;
@@ -22235,8 +22305,8 @@ Potree.MapView = class {
 		if (resized) {
 			this.map.updateSize();
 		}
-		
-		// 
+
+		//
 		let camera = this.viewer.scene.getActiveCamera();
 
 		let scale = this.map.getView().getResolution();
