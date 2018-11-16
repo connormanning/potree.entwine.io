@@ -75,7 +75,8 @@ var Footer = React.createClass({
 var Thumb = React.createClass({
     render: function() {
         var r = this.props.resource;
-        var href = '/data/' + r.page + '.html';
+        var href = '/' + (r.old ? 'old/' : '') + 'data/' + r.page + '.html';
+        var oldhref = '/old/data/' + r.page + '.html';
 
         var flags = [
             <a href={ href }>
@@ -87,9 +88,10 @@ var Thumb = React.createClass({
             </a>
         ];
 
+        // For now EU versions are not updated.
         if (r.eu) {
             flags = flags.concat(
-                <a href={ href + '?location=eu-c.entwine.io' }>
+                <a href={ oldhref + '?location=eu-c.entwine.io' }>
                     <img
                         className='flag'
                         title='Served from EU'
@@ -100,9 +102,7 @@ var Thumb = React.createClass({
         }
 
         return <div className='col-xs-6 col-sm-4'>
-            <a
-                href={ '/data/' + r.page + '.html' }
-            >
+            <a href={ href }>
                 <img
                     className='img-responsive thumb img-thumbnail'
                     src={ 'resources/images/' + r.page + '.jpg' }
@@ -113,37 +113,40 @@ var Thumb = React.createClass({
     }
 });
 
-var Resource = function(name, page, eu) {
+var Resource = function(name, page, eu, old) {
     this.name = name;
     this.page = page;
     this.eu = eu;
+    this.old = old;
 };
 
 var Page = React.createClass({
     render: function() {
         var eu = true;
+        var old = true;
 
         var resources = [
             new Resource('Denmark', 'denmark', eu),
             new Resource('Railway - France', 'sncf', eu),
             new Resource('Red Rocks Amphitheatre', 'red-rocks', eu),
-            new Resource('New Zealand', 'new-zealand'),
+            new Resource('New Zealand', 'new-zealand', false),
             new Resource('New York City', 'nyc', eu),
             new Resource('Iowa', 'iowa', eu),
-            new Resource('Kentucky', 'kentucky'),
+            new Resource('Kentucky', 'kentucky', false, old),
             new Resource('Lake Isabella', 'lake-isabella', eu),
-            new Resource('Washington DC', 'dc'),
-            new Resource('Netherlands', 'ahn'),
-            new Resource('Minnesota', 'mn'),
-            new Resource('Iowa Beer Caves', 'beer-caves'),
+            new Resource('Washington DC', 'dc', false),
+            new Resource('Netherlands', 'ahn', false),
+            new Resource('Minnesota', 'mn', false),
+            new Resource('Iowa Beer Caves', 'beer-caves', false),
             new Resource('Autzen Stadium', 'autzen', eu),
             new Resource('Vanuatu Village - Nepal', 'vanuatu-village', eu),
-            new Resource('Dublin', 'dublin'),
+            new Resource('Dublin', 'dublin', eu),
             new Resource('Half Dome - Yosemite', 'half-dome', eu),
             new Resource('Cedar Falls Bridge - Iowa', 'iowa-bridge', eu),
             new Resource('Mount St. Helens', 'st-helens', eu),
             new Resource('Space Shuttle Discovery', 'shuttle', eu),
             new Resource('Lone Star Geyser', 'lone-star', eu),
+            new Resource('MH370', 'mh370', false),
         ];
 
         return <div>

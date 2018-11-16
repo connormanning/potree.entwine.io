@@ -329,6 +329,8 @@ var init = (name) => {
 
         $('#menu_scene').click();
         if (name) $("a:contains('" + name + "')").click();
+
+        window.viewerLoaded = true;
     });
 };
 
@@ -337,8 +339,9 @@ var loaded = 0;
 var http = 'http';
 var postfix = 'ept.json';
 var loc = getQueryParam('location');
+var pcs = new Array(resources.length);
 
-resources.forEach((path) => {
+resources.forEach((path, i) => {
     if (loc) path = path.replace('na-c.entwine.io', loc);
 
     if (path.indexOf('greyhound://') != -1) {
@@ -371,14 +374,18 @@ resources.forEach((path) => {
     }
 
     console.log('Loading', name, path);
+    var index = i;
 
     Potree.loadPointCloud(path, name, (e) => {
-        console.log('Loaded', name);
-        viewer.scene.addPointCloud(e.pointcloud);
-        console.log(e.pointcloud);
+        pcs[index] = e.pointcloud;
+        console.log('Loaded', name, index);
 
         if (++loaded == resources.length) {
             console.log('All point clouds loaded');
+            for (var i = 0; i < pcs.length; ++i) {
+                viewer.scene.addPointCloud(pcs[i]);
+            }
+
             viewer.fitToScreen();
             // viewer.scene.camera.near = 10;
 
@@ -413,6 +420,47 @@ window.toggleAnnotations = () => {
         el.attr('state', 'off');
         el.attr('src', '/resources/icons/entwine-annotations-off.svg');
     }
+}
+
+window.movieMs = 0;
+window.movieTimeout = null;
+
+window.movie = (ms, step) => {
+    if (!step) step = 1;
+
+    if (window.movieTimeout) {
+        clearTimeout(window.movieTimeout);
+        window.movieTimeout = null;
+    }
+
+    window.movieMs = ms;
+    if (!window.movieMs) return;
+
+    var els = $('#pointclouds').find('.jstree-children .jstree-checkbox');
+
+    // Set only the first entry visible.
+    for (var i = 0; i < els.length; ++i) {
+        var checked = $(els[i]).parent().hasClass('jstree-checked');
+
+        if (!i && !checked) els[i].click();
+        else if (i && checked) els[i].click();
+    }
+
+    var i = 0;
+
+    var next = () => {
+        // Disable index i.
+        els[i].click();
+
+        // Enable index i + 1.
+        i += step;
+        if (i >= els.length) i = 0;
+        els[i].click();
+
+        if (window.movieMs) window.movieTimeout = setTimeout(next, ms);
+    };
+
+    window.movieTimeout = setTimeout(next, ms);
 }
 
 new Clipboard('#entwine_copy', {
