@@ -1,210 +1,209 @@
 Potree = { };
 
 onmessage = function(event) {
-    let buffer = event.data.buffer;
-    let view = new DataView(buffer);
-    let schema = event.data.schema;
-    let scale = event.data.scale;
-    let offset = event.data.offset;
-    let mins = event.data.mins;
+	let buffer = event.data.buffer;
+	let view = new DataView(buffer);
+	let schema = event.data.schema;
+	let scale = event.data.scale;
+	let offset = event.data.offset;
+	let mins = event.data.mins;
 
-    let dimensions = schema.reduce((p, c) => {
-        p[c.name] = c;
-        return p;
-    }, { });
+	let dimensions = schema.reduce((p, c) => {
+		p[c.name] = c;
+		return p;
+	}, { });
 
-    let dimSize = (type) => {
-        switch (type) {
-            case 'int8': case 'uint8': return 1;
-            case 'int16': case 'uint16': return 2;
-            case 'int32': case 'uint32': case 'float': return 4;
-            case 'int64': case 'uint64': case 'double': return 8;
-            default: throw new Error('Invalid dimension type: ' + type);
-        }
-    };
+	let dimOffset = (name) => {
+		let offset = 0;
+		for (var i = 0; i < schema.length; ++i) {
+			if (schema[i].name == name) return offset;
+			offset += schema[i].size;
+		}
+		return undefined;
+	};
 
-    let dimOffset = (name) => {
-        let offset = 0;
-        for (var i = 0; i < schema.length; ++i) {
-            if (schema[i].name == name) return offset;
-            offset += dimSize(schema[i].type);
-        }
-        return undefined;
-    };
+	let getExtractor = (name) => {
+		let offset = dimOffset(name);
+		let type = dimensions[name].type;
+		let size = dimensions[name].size;
 
-    let getExtractor = (name) => {
-        let offset = dimOffset(name);
-        switch (dimensions[name].type) {
-            case 'int8'  : return (p) => view.getInt8(p + offset);
-            case 'int16' : return (p) => view.getInt16(p + offset, true);
-            case 'int32' : return (p) => view.getInt32(p + offset, true);
-            case 'int64' : return (p) => view.getInt64(p + offset, true);
-            case 'uint8' : return (p) => view.getUint8(p + offset);
-            case 'uint16': return (p) => view.getUint16(p + offset, true);
-            case 'uint32': return (p) => view.getUint32(p + offset, true);
-            case 'uint64': return (p) => view.getUint64(p + offset, true);
-            case 'float' : return (p) => view.getFloat32(p + offset, true);
-            case 'double': return (p) => view.getFloat64(p + offset, true);
-            default: throw new Error('Invalid dimension type: ' + type);
-        };
-    };
+		if (type == 'signed') switch (size) {
+			case 1: return (p) => view.getInt8(p + offset);
+			case 2: return (p) => view.getInt16(p + offset, true);
+			case 4: return (p) => view.getInt32(p + offset, true);
+			case 8: return (p) => view.getInt64(p + offset, true);
+		}
+		if (type == 'unsigned') switch (size) {
+			case 1: return (p) => view.getUint8(p + offset);
+			case 2: return (p) => view.getUint16(p + offset, true);
+			case 4: return (p) => view.getUint32(p + offset, true);
+			case 8: return (p) => view.getUint64(p + offset, true);
+		}
+		if (type == 'float') switch (size) {
+			case 4: return (p) => view.getFloat32(p + offset, true);
+			case 8: return (p) => view.getFloat64(p + offset, true);
+		}
 
-    let pointSize = schema.reduce((p, c) => p + dimSize(c.type), 0);
-    let numPoints = buffer.byteLength / pointSize;
+		let str = JSON.stringify(dimensions[name]);
+		throw new Error(`Invalid dimension specification for ${name}: ${str}`);
+	};
 
-    let xyzBuffer, rgbBuffer, intensityBuffer, classificationBuffer,
-        returnNumberBuffer, numberOfReturnsBuffer, pointSourceIdBuffer;
-    let xyz, rgb, intensity, classification, returnNumber, numberOfReturns,
-        pointSourceId;
-    let xyzExtractor, rgbExtractor, intensityExtractor, classificationExtractor,
-        returnNumberExtractor, numberOfReturnsExtractor, pointSourceIdExtractor;
-    let twoByteColor = false;
+	let pointSize = schema.reduce((p, c) => p + c.size, 0);
+	let numPoints = buffer.byteLength / pointSize;
 
-    if (dimensions['X'] && dimensions['Y'] && dimensions['Z']) {
-        xyzBuffer = new ArrayBuffer(numPoints * 4 * 3);
-        xyz = new Float32Array(xyzBuffer);
-        xyzExtractor = [
-            getExtractor('X'),
-            getExtractor('Y'),
-            getExtractor('Z')
-        ];
-    }
+	let xyzBuffer, rgbBuffer, intensityBuffer, classificationBuffer,
+		returnNumberBuffer, numberOfReturnsBuffer, pointSourceIdBuffer;
+	let xyz, rgb, intensity, classification, returnNumber, numberOfReturns,
+		pointSourceId;
+	let xyzExtractor, rgbExtractor, intensityExtractor, classificationExtractor,
+		returnNumberExtractor, numberOfReturnsExtractor, pointSourceIdExtractor;
+	let twoByteColor = false;
 
-    if (dimensions['Red'] && dimensions['Green'] && dimensions['Blue']) {
-        rgbBuffer = new ArrayBuffer(numPoints * 4);
-        rgb = new Uint8Array(rgbBuffer);
-        rgbExtractor = [
-            getExtractor('Red'),
-            getExtractor('Green'),
-            getExtractor('Blue')
-        ];
+	if (dimensions['X'] && dimensions['Y'] && dimensions['Z']) {
+		xyzBuffer = new ArrayBuffer(numPoints * 4 * 3);
+		xyz = new Float32Array(xyzBuffer);
+		xyzExtractor = [
+			getExtractor('X'),
+			getExtractor('Y'),
+			getExtractor('Z')
+		];
+	}
 
-        let r, g, b, pos;
-        for (let i = 0; i < numPoints && !twoByteColor; ++i) {
-            pos = i * pointSize;
-            r = rgbExtractor[0](pos);
-            g = rgbExtractor[1](pos);
-            b = rgbExtractor[2](pos);
-            if (r > 255 || g > 255 || b > 255) twoByteColor = true;
-        }
-    }
+	if (dimensions['Red'] && dimensions['Green'] && dimensions['Blue']) {
+		rgbBuffer = new ArrayBuffer(numPoints * 4);
+		rgb = new Uint8Array(rgbBuffer);
+		rgbExtractor = [
+			getExtractor('Red'),
+			getExtractor('Green'),
+			getExtractor('Blue')
+		];
 
-    if (dimensions['Intensity']) {
-        intensityBuffer = new ArrayBuffer(numPoints * 4);
-        intensity = new Float32Array(intensityBuffer);
-        intensityExtractor = getExtractor('Intensity');
-    }
+		let r, g, b, pos;
+		for (let i = 0; i < numPoints && !twoByteColor; ++i) {
+			pos = i * pointSize;
+			r = rgbExtractor[0](pos);
+			g = rgbExtractor[1](pos);
+			b = rgbExtractor[2](pos);
+			if (r > 255 || g > 255 || b > 255) twoByteColor = true;
+		}
+	}
 
-    if (dimensions['Classification']) {
-        classificationBuffer = new ArrayBuffer(numPoints);
-        classification = new Uint8Array(classificationBuffer);
-        classificationExtractor = getExtractor('Classification');
-    }
+	if (dimensions['Intensity']) {
+		intensityBuffer = new ArrayBuffer(numPoints * 4);
+		intensity = new Float32Array(intensityBuffer);
+		intensityExtractor = getExtractor('Intensity');
+	}
 
-    if (dimensions['ReturnNumber']) {
-        returnNumberBuffer = new ArrayBuffer(numPoints);
-        returnNumber = new Uint8Array(returnNumberBuffer);
-        returnNumberExtractor = getExtractor('ReturnNumber');
-    }
+	if (dimensions['Classification']) {
+		classificationBuffer = new ArrayBuffer(numPoints);
+		classification = new Uint8Array(classificationBuffer);
+		classificationExtractor = getExtractor('Classification');
+	}
 
-    if (dimensions['NumberOfReturns']) {
-        numberOfReturnsBuffer = new ArrayBuffer(numPoints);
-        numberOfReturns = new Uint8Array(numberOfReturnsBuffer);
-        numberOfReturnsExtractor = getExtractor('NumberOfReturns');
-    }
+	if (dimensions['ReturnNumber']) {
+		returnNumberBuffer = new ArrayBuffer(numPoints);
+		returnNumber = new Uint8Array(returnNumberBuffer);
+		returnNumberExtractor = getExtractor('ReturnNumber');
+	}
 
-    if (dimensions['PointSourceId']) {
-        pointSourceIdBuffer = new ArrayBuffer(numPoints * 2);
-        pointSourceId = new Uint16Array(pointSourceIdBuffer);
-        pointSourceIdExtractor = getExtractor('PointSourceId');
-    }
+	if (dimensions['NumberOfReturns']) {
+		numberOfReturnsBuffer = new ArrayBuffer(numPoints);
+		numberOfReturns = new Uint8Array(numberOfReturnsBuffer);
+		numberOfReturnsExtractor = getExtractor('NumberOfReturns');
+	}
 
-    let mean = [0, 0, 0];
-    let bounds = {
-        min: [Number.MAX_VALUE, Number.MAX_VALUE, Number.MAX_VALUE],
-        max: [-Number.MAX_VALUE, -Number.MAX_VALUE, -Number.MAX_VALUE],
-    };
+	if (dimensions['PointSourceId']) {
+		pointSourceIdBuffer = new ArrayBuffer(numPoints * 2);
+		pointSourceId = new Uint16Array(pointSourceIdBuffer);
+		pointSourceIdExtractor = getExtractor('PointSourceId');
+	}
 
-    let x, y, z, r, g, b;
-    for (let i = 0; i < numPoints; ++i) {
-        let pos = i * pointSize;
-        if (xyz) {
-            x = xyzExtractor[0](pos) * scale.x + offset.x - mins[0];
-            y = xyzExtractor[1](pos) * scale.y + offset.y - mins[1];
-            z = xyzExtractor[2](pos) * scale.z + offset.z - mins[2];
+	let mean = [0, 0, 0];
+	let bounds = {
+		min: [Number.MAX_VALUE, Number.MAX_VALUE, Number.MAX_VALUE],
+		max: [-Number.MAX_VALUE, -Number.MAX_VALUE, -Number.MAX_VALUE],
+	};
 
-            mean[0] += x / numPoints;
-            mean[1] += y / numPoints;
-            mean[2] += z / numPoints;
+	let x, y, z, r, g, b;
+	for (let i = 0; i < numPoints; ++i) {
+		let pos = i * pointSize;
+		if (xyz) {
+			x = xyzExtractor[0](pos) * scale.x + offset.x - mins[0];
+			y = xyzExtractor[1](pos) * scale.y + offset.y - mins[1];
+			z = xyzExtractor[2](pos) * scale.z + offset.z - mins[2];
 
-            bounds.min[0] = Math.min(bounds.min[0], x);
-            bounds.min[1] = Math.min(bounds.min[1], y);
-            bounds.min[2] = Math.min(bounds.min[2], z);
+			mean[0] += x / numPoints;
+			mean[1] += y / numPoints;
+			mean[2] += z / numPoints;
 
-            bounds.max[0] = Math.max(bounds.max[0], x);
-            bounds.max[1] = Math.max(bounds.max[1], y);
-            bounds.max[2] = Math.max(bounds.max[2], z);
+			bounds.min[0] = Math.min(bounds.min[0], x);
+			bounds.min[1] = Math.min(bounds.min[1], y);
+			bounds.min[2] = Math.min(bounds.min[2], z);
 
-            xyz[3 * i + 0] = x;
-            xyz[3 * i + 1] = y;
-            xyz[3 * i + 2] = z;
-        }
+			bounds.max[0] = Math.max(bounds.max[0], x);
+			bounds.max[1] = Math.max(bounds.max[1], y);
+			bounds.max[2] = Math.max(bounds.max[2], z);
 
-        if (rgb) {
-            r = rgbExtractor[0](pos);
-            g = rgbExtractor[1](pos);
-            b = rgbExtractor[2](pos);
+			xyz[3 * i + 0] = x;
+			xyz[3 * i + 1] = y;
+			xyz[3 * i + 2] = z;
+		}
 
-            if (twoByteColor) {
-                r /= 256;
-                g /= 256;
-                b /= 256;
-            }
+		if (rgb) {
+			r = rgbExtractor[0](pos);
+			g = rgbExtractor[1](pos);
+			b = rgbExtractor[2](pos);
 
-            rgb[4 * i + 0] = r;
-            rgb[4 * i + 1] = g;
-            rgb[4 * i + 2] = b;
-        }
+			if (twoByteColor) {
+				r /= 256;
+				g /= 256;
+				b /= 256;
+			}
 
-        if (intensity) intensity[i] = intensityExtractor(pos);
-        if (classification) classification[i] = classificationExtractor(pos);
-        if (returnNumber) returnNumber[i] = returnNumberExtractor(pos);
-        if (numberOfReturns) numberOfReturns[i] = numberOfReturnsExtractor(pos);
-        if (pointSourceId) pointSourceId[i] = pointSourceIdExtractor(pos);
-    }
+			rgb[4 * i + 0] = r;
+			rgb[4 * i + 1] = g;
+			rgb[4 * i + 2] = b;
+		}
 
-    let indicesBuffer = new ArrayBuffer(numPoints * 4);
-    let indices = new Uint32Array(indicesBuffer);
-    for (let i = 0; i < numPoints; ++i) {
-        indices[i] = i;
-    }
+		if (intensity) intensity[i] = intensityExtractor(pos);
+		if (classification) classification[i] = classificationExtractor(pos);
+		if (returnNumber) returnNumber[i] = returnNumberExtractor(pos);
+		if (numberOfReturns) numberOfReturns[i] = numberOfReturnsExtractor(pos);
+		if (pointSourceId) pointSourceId[i] = pointSourceIdExtractor(pos);
+	}
 
-    let message = {
-        numPoints: numPoints,
-        tightBoundingBox: bounds,
-        mean: mean,
+	let indicesBuffer = new ArrayBuffer(numPoints * 4);
+	let indices = new Uint32Array(indicesBuffer);
+	for (let i = 0; i < numPoints; ++i) {
+		indices[i] = i;
+	}
 
-        position: xyzBuffer,
-        color: rgbBuffer,
-        intensity: intensityBuffer,
-        classification: classificationBuffer,
-        returnNumber: returnNumberBuffer,
-        numberOfReturns: numberOfReturnsBuffer,
-        pointSourceId: pointSourceIdBuffer,
-        indices: indicesBuffer
-    };
+	let message = {
+		numPoints: numPoints,
+		tightBoundingBox: bounds,
+		mean: mean,
 
-    let transferables = [
-        message.position,
-        message.color,
-        message.intensity,
-        message.classification,
-        message.returnNumber,
-        message.numberOfReturns,
-        message.pointSourceId,
-        message.indices
-    ].filter((v) => v);
+		position: xyzBuffer,
+		color: rgbBuffer,
+		intensity: intensityBuffer,
+		classification: classificationBuffer,
+		returnNumber: returnNumberBuffer,
+		numberOfReturns: numberOfReturnsBuffer,
+		pointSourceId: pointSourceIdBuffer,
+		indices: indicesBuffer
+	};
 
-    postMessage(message, transferables);
+	let transferables = [
+		message.position,
+		message.color,
+		message.intensity,
+		message.classification,
+		message.returnNumber,
+		message.numberOfReturns,
+		message.pointSourceId,
+		message.indices
+	].filter((v) => v);
+
+	postMessage(message, transferables);
 }
 

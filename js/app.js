@@ -113,17 +113,15 @@ var Thumb = React.createClass({
     }
 });
 
-var Resource = function(name, page, eu, old) {
+var Resource = function(name, page, eu) {
     this.name = name;
     this.page = page;
     this.eu = eu;
-    this.old = old;
 };
 
 var Page = React.createClass({
     render: function() {
         var eu = true;
-        var old = true;
 
         var resources = [
             new Resource('Denmark', 'denmark', eu),
@@ -132,7 +130,7 @@ var Page = React.createClass({
             new Resource('New Zealand', 'new-zealand', false),
             new Resource('New York City', 'nyc', eu),
             new Resource('Iowa', 'iowa', eu),
-            new Resource('Kentucky', 'kentucky', false, old),
+            new Resource('Kentucky', 'kentucky', false),
             new Resource('Lake Isabella', 'lake-isabella', eu),
             new Resource('Washington DC', 'dc', false),
             new Resource('Netherlands', 'ahn', false),
