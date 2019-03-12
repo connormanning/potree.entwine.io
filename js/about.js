@@ -150,7 +150,15 @@ var Page = React.createClass({
                                     </a> sample data
                                 </Credit>
 
-                                <Credit name='Lake Isabella'>
+                                <Credit name='Salzburg'>
+                                    Source data: <a href="http://www.bev.gv.at/">BEV</a>
+                                    <br/>
+                                    Point cloud processing: <a href="https://www.catalysts.cc/">Catalysts</a>
+                                    <br/>
+                                    <a href="https://www.catalysts.cc/en/big-data/salzburg-in-pixels-part-2/">Blog post</a>
+                                </Credit>
+
+                                <Credit name='Lake Isabella, Hanover'>
                                     David Finnegan, <a href="http://www.erdc.usace.army.mil/Locations/CRREL/Research.aspx">RS/GIS CRREL USACE</a>, 2015
                                 </Credit>
 

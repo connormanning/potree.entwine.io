@@ -33,43 +33,10 @@
     <script src="../libs/clipboard.min.js" type="text/javascript"></script>
     <script type="text/javascript">
         window.config = {
-            resource: 'https://s3-us-west-2.amazonaws.com/usgs-lidar-public/MN_FullState',
-            material: Potree.PointColorType.ELEVATION,
-            elevationRange: [250, 600],
-            intensityGamma: 0.6,
-            position: [-10529287.04, 5573270.99, 575373.81],
-            target: [-10528217.34, 5720351.34, 59770.75],
-            classificationFilter: [7],
-            annotations: [{
-                name: "State Capitol Building",
-                pos: [-10364091.69, 5614426.38, 270.16],
-                cpos: [-10363998.71, 5614333.20, 370.21],
-                ctgt: [-10364064.35, 5614445.49, 290.11]
-            },
-            {
-                name: "Target Field",
-                pos: [-10383639.69, 5618648.05, 251.75],
-                cpos: [-10383804.97, 5618736.76, 419.21],
-                ctgt: [-10383647.19, 5618639.77, 251.81]
-            },
-            {
-                name: "Hull–Rust–Mahoning Open Pit Iron Mine",
-                pos: [-10344309.25, 6016590.75, 517.25],
-                cpos: [-10342964.39, 6017111.79, 1710.00],
-                ctgt: [-10343903.78, 6016575.41, 523.82]
-            },
-            {
-                name: "Lock & Dam 4",
-                pos: [-10179188.44, 5464877.97, 198.84],
-                cpos: [-10178961.34, 5466107.74, 827.19],
-                ctgt: [-10178777.84, 5465155.67, 43.73]
-            },
-            {
-                name: "Split Rock Lighthouse",
-                pos: [-10170923.94, 5974770.56, 223.47],
-                cpos: [-10170684.50, 5974774.50, 266.46],
-                ctgt: [-10170916.18, 5974781.99, 211.85]
-            }]
+            resource: 'http://act-2015-rgb.s3.amazonaws.com',
+            position: [690625.870, 6052597.604, 80395.976],
+            target: [690762.364, 6063676.583, 301.042],
+            hq: true
         };
     </script>
     <div id="potree_container">

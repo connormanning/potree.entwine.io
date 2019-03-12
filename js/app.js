@@ -78,7 +78,15 @@ var Thumb = React.createClass({
         var href = '/' + (r.old ? 'old/' : '') + 'data/' + r.page + '.html';
         var oldhref = '/old/data/' + r.page + '.html';
 
-        var flags = [
+        var ext = [
+                <img
+                    className='flag'
+                    title='Served via third-party'
+                    src='resources/icons/goto.svg'
+                />
+        ];
+
+        var na = [
             <a href={ href }>
                 <img
                     className='flag'
@@ -89,17 +97,20 @@ var Thumb = React.createClass({
         ];
 
         // For now EU versions are not updated.
-        if (r.eu) {
-            flags = flags.concat(
-                <a href={ oldhref + '?location=eu-c.entwine.io' }>
-                    <img
-                        className='flag'
-                        title='Served from EU'
-                        src='resources/icons/eu.svg'
-                    />
-                </a>
-            );
-        }
+        var eu = [
+            <a href={ ext ? href : oldhref + '?location=eu-c.entwine.io' }>
+                <img
+                    className='flag'
+                    title='Served from EU'
+                    src='resources/icons/eu.svg'
+                />
+            </a>
+        ]
+
+        var flags = []
+        if (r.eu) flags = flags.concat(eu)
+        if (r.na) flags = flags.concat(na)
+        if (r.ext) flags = flags.concat(ext)
 
         return <div className='col-xs-6 col-sm-4'>
             <a href={ href }>
@@ -113,38 +124,44 @@ var Thumb = React.createClass({
     }
 });
 
-var Resource = function(name, page, eu) {
+var Resource = function(name, page, params) {
     this.name = name;
     this.page = page;
-    this.eu = eu;
+    this.na = params.na;
+    this.eu = params.eu;
+    this.ext = params.ext;
 };
 
 var Page = React.createClass({
     render: function() {
-        var eu = true;
+        var na = { na: true };
+        var eu = { eu: true };
+        var both = { na: true, eu: true };
 
         var resources = [
-            new Resource('Denmark', 'denmark', eu),
-            new Resource('Railway - France', 'sncf', eu),
-            new Resource('Red Rocks Amphitheatre', 'red-rocks', eu),
-            new Resource('New Zealand', 'new-zealand', false),
-            new Resource('New York City', 'nyc', eu),
-            new Resource('Iowa', 'iowa', eu),
-            new Resource('Kentucky', 'kentucky', false),
-            new Resource('Lake Isabella', 'lake-isabella', eu),
-            new Resource('Washington DC', 'dc', false),
-            new Resource('Netherlands', 'ahn', false),
-            new Resource('Minnesota', 'mn', false),
-            new Resource('Iowa Beer Caves', 'beer-caves', false),
-            new Resource('Autzen Stadium', 'autzen', eu),
-            new Resource('Vanuatu Village - Nepal', 'vanuatu-village', eu),
-            new Resource('Dublin', 'dublin', eu),
-            new Resource('Half Dome - Yosemite', 'half-dome', eu),
-            new Resource('Cedar Falls Bridge - Iowa', 'iowa-bridge', eu),
-            new Resource('Mount St. Helens', 'st-helens', eu),
-            new Resource('Space Shuttle Discovery', 'shuttle', eu),
-            new Resource('Lone Star Geyser', 'lone-star', eu),
-            new Resource('MH370', 'mh370', false),
+            new Resource('Denmark', 'denmark', both),
+            new Resource('Railway - France', 'sncf', both),
+            new Resource('Red Rocks Amphitheatre', 'red-rocks', both),
+            new Resource('Kentucky', 'kentucky', na),
+            new Resource('New York City', 'nyc', both),
+            new Resource('Salzburg', 'salzburg', { eu: true, ext: true }),
+            new Resource('New Zealand', 'new-zealand', na),
+            new Resource('Iowa', 'iowa', both),
+            new Resource('Lake Isabella', 'lake-isabella', both),
+            new Resource('Hanover', 'hanover', { na: true }),
+            new Resource('Washington DC', 'dc', na),
+            new Resource('Netherlands', 'ahn', na),
+            new Resource('Minnesota', 'mn', na),
+            new Resource('Iowa Beer Caves', 'beer-caves', na),
+            new Resource('Autzen Stadium', 'autzen', both),
+            new Resource('Vanuatu Village - Nepal', 'vanuatu-village', both),
+            new Resource('Dublin', 'dublin', both),
+            new Resource('Half Dome - Yosemite', 'half-dome', both),
+            new Resource('Cedar Falls Bridge - Iowa', 'iowa-bridge', both),
+            new Resource('Mount St. Helens', 'st-helens', both),
+            new Resource('Space Shuttle Discovery', 'shuttle', both),
+            new Resource('Lone Star Geyser', 'lone-star', both),
+            new Resource('MH370', 'mh370', na),
         ];
 
         return <div>

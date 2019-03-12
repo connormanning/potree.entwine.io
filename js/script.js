@@ -55,7 +55,7 @@ var defaults = {
     intensityContrast: 0,
     intensityBrightness: 0,
     classificationFilter: [],
-    hq: false
+    hq: true
 };
 
 var clone = (v) => JSON.parse(JSON.stringify(v));
@@ -83,7 +83,7 @@ var lookup = {
     p: 'position',
     t: 'target',
     bg: 'background',
-    ira: 'intensityRange',
+    ir: 'intensityRange',
     era: 'elevationRange',
     cf: 'classificationFilter',
     l: 'language',
@@ -117,6 +117,9 @@ var getClassificationFilters = () => {
 var get = () => {
     var pc = viewer.scene.pointclouds[0];
     var mt = pc.material;
+
+    console.log('CONFIG', config);
+    console.log('DEFAULTS', defaults);
 
     var state = {
         // Include these if they've changed from the initial state.
@@ -333,9 +336,12 @@ var init = (name) => {
         return a;
     };
 
-    var active = merge(defaults, merge(clone(config), queryConfig()));
+    var active = merge(clone(defaults), merge(clone(config), queryConfig()));
+    console.log('Active', active);
 
-    Object.keys(active).forEach((k) => {
+    // Sort these purely because position must be applied before target or the
+    // resulting view will be wrong.
+    Object.keys(active).sort().forEach((k) => {
         var v = active[k];
         set(k, v);
     });
@@ -346,7 +352,7 @@ var init = (name) => {
     }
 
     var r = queryParam('r') || queryParam('resource');
-    if (r) r = '?r=' + r;
+    if (r) r = '?r=' + JSON.stringify(r);
     else r = ''
     history.replaceState(null, null, location.pathname + r);
 

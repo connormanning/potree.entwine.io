@@ -3586,7 +3586,7 @@
 			this.type = 'ept';
 
 			this.schema = schema;
-			this.span = info.span;
+			this.span = info.span || info.ticks;
 			this.boundingBox = U.toBox3(bounds);
 			this.tightBoundingBox = U.toBox3(boundsConforming);
 			this.offset = U.toVector3([0, 0, 0]);
