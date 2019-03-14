@@ -309,7 +309,9 @@ var normalizePath = (p) => {
 
     if (!path.endsWith('ept.json')) {
         path = appendSlash(path) + 'ept.json';
-        if (!path.startsWith('http')) path = 'http://' + path;
+        if (!path.startsWith('http') && !path.startsWith('/')) {
+            path = 'http://' + path;
+        }
     }
 
     name = path.replace('/ept.json', '').split('/').pop();
@@ -404,6 +406,18 @@ resources.forEach((p, i) => {
         if (pcs.every((v) => v)) {
             console.log('All point clouds loaded');
             init(resources.length == 1 ? name : null);
+
+            if (window.config.color &&
+                window.config.color.length == resources.length) {
+                var fromRgb = function(a) {
+                    a = a.map(v => v / 255)
+                    return { r: a[0], g: a[1], b: a[2] }
+                }
+                for (var c = 0; c < resources.length; ++c) {
+                    viewer.scene.pointclouds[c].material.color =
+                        fromRgb(window.config.color[c])
+                }
+            }
         }
     });
 });
