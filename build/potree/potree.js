@@ -3612,10 +3612,19 @@
 
 			let hierarchyType = info.hierarchyType || 'json';
 
-			let dataType = info.dataType || 'laszip';
-			this.loader = dataType == 'binary'
-				? new Potree.EptBinaryLoader()
-				: new Potree.EptLaszipLoader();
+	        const dataType = info.dataType;
+	        if (dataType == 'laszip') {
+	            this.loader = new Potree.EptLaszipLoader();
+	        }
+	        else if (dataType == 'binary') {
+				this.loader = new Potree.EptBinaryLoader();
+	        }
+	        else if (dataType == 'zstandard') {
+	            this.loader = new Potree.EptZstandardLoader();
+	        }
+	        else {
+	            throw new Error('Could not read data type: ' + dataType);
+	        }
 		}
 	}
 
@@ -12639,10 +12648,18 @@ void main() {
 	}
 
 	class EptBinaryLoader {
+		extension() {
+			return '.bin';
+		}
+
+		workerPath() {
+			return Potree.scriptPath + '/workers/EptBinaryDecoderWorker.js';
+		}
+
 		load(node) {
 			if (node.loaded) return;
 
-			let url = node.url() + '.bin';
+			let url = node.url() + this.extension();
 
 			let xhr = XHRFactory.createXMLHttpRequest();
 			xhr.open('GET', url, true);
@@ -12668,8 +12685,7 @@ void main() {
 		}
 
 		parse(node, buffer) {
-			let workerPath = Potree.scriptPath +
-				'/workers/EptBinaryDecoderWorker.js';
+			let workerPath = this.workerPath();
 			let worker = Potree.workerPool.getWorker(workerPath);
 
 			worker.onmessage = function(e) {
@@ -12907,6 +12923,16 @@ void main() {
 
 			worker.postMessage(message, [message.buffer]);
 		};
+	}
+
+	class EptZstandardLoader extends EptBinaryLoader {
+	    extension() {
+	        return '.zst';
+	    }
+
+	    workerPath() {
+	        return Potree.scriptPath + '/workers/EptZstandardDecoderWorker.js';
+	    }
 	}
 
 	class GreyhoundBinaryLoader{
@@ -17985,8 +18011,7 @@ void main() {
 			if (!this.sceneProjection) {
 				try {
 					this.setSceneProjection(pointcloud.projection);
-				}
-				catch (e) {
+				}catch (e) {
 					console.log('Failed projection:', e);
 
 					if (pointcloud.fallbackProjection) {
@@ -17994,12 +18019,13 @@ void main() {
 							console.log('Trying fallback projection...');
 							this.setSceneProjection(pointcloud.fallbackProjection);
 							console.log('Set projection from fallback');
-						}
-						catch (e) {
+						}catch (e) {
 							console.log('Failed fallback projection:', e);
+							return;
 						}
+					}else{
+						return;
 					}
-					else return;
 				}
 			}
 
@@ -26196,6 +26222,7 @@ ENDSEC
 	exports.EptBinaryLoader = EptBinaryLoader;
 	exports.EptLaszipLoader = EptLaszipLoader;
 	exports.EptLazBatcher = EptLazBatcher;
+	exports.EptZstandardLoader = EptZstandardLoader;
 	exports.GreyhoundBinaryLoader = GreyhoundBinaryLoader;
 	exports.GreyhoundLoader = GreyhoundLoader;
 	exports.PointAttributeNames = PointAttributeNames;
