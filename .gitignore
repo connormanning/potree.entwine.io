@@ -1,4 +1,6 @@
 private/*
 data/test.html
 entwine/
+**/node_modules/**
+stuff/dist/bundle.js
 

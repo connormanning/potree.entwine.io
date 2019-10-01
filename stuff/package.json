@@ -1,0 +1,21 @@
+{
+  "name": "stuff",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "@babel/cli": "^7.6.2",
+    "@babel/core": "^7.6.2",
+    "@babel/preset-env": "^7.6.2",
+    "@babel/preset-react": "^7.0.0",
+    "babel-loader": "^8.0.6",
+    "npx": "^10.2.0",
+    "react": "^16.10.1",
+    "react-dom": "^16.10.1",
+    "react-select": "^3.0.7",
+    "webpack": "^4.41.0"
+  },
+  "devDependencies": {
+    "webpack-cli": "^3.3.9"
+  }
+}

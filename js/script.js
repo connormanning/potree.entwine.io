@@ -360,7 +360,7 @@ var init = (name) => {
 
     console.log('Loading UI');
 
-    viewer.loadGUI(() => {
+    // viewer.loadGUI(() => {
         viewer.setLanguage('en');
         $("#menu_appearance").next().show();
         $("#menu_scene").next().show();
@@ -391,7 +391,7 @@ var init = (name) => {
                 viewer.setClassificationVisibility(v, false);
             }
         });
-    });
+    // });
 };
 
 resources.forEach((p, i) => {
