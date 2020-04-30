@@ -107,9 +107,20 @@ var Thumb = React.createClass({
             </a>
         ]
 
+        var brazil = [
+            <a href={ href }>
+                <img
+                    className='flag'
+                    title='Served from Brazil'
+                    src='resources/icons/brazil.svg'
+                />
+            </a>
+        ];
+
         var flags = []
         if (r.eu) flags = flags.concat(eu)
         if (r.na) flags = flags.concat(na)
+        if (r.brazil) flags = flags.concat(brazil)
         if (r.ext) flags = flags.concat(ext)
 
         return <div className='col-xs-6 col-sm-4'>
@@ -130,6 +141,7 @@ var Resource = function(name, page, params) {
     this.na = params.na;
     this.eu = params.eu;
     this.ext = params.ext;
+    this.brazil = params.brazil;
 };
 
 var Page = React.createClass({
@@ -144,8 +156,8 @@ var Page = React.createClass({
             new Resource('Railway - France', 'sncf', both),
             new Resource('Red Rocks Amphitheatre', 'red-rocks', both),
             new Resource('Kentucky', 'kentucky', na),
+            new Resource('São Paulo City', 'sao-paulo-city', { brazil: true, ext: true }),
             new Resource('New York City', 'nyc', both),
-            new Resource('Salzburg', 'salzburg', { eu: true, ext: true }),
             new Resource('New Zealand', 'new-zealand', na),
             new Resource('Iowa', 'iowa', both),
             new Resource('Lake Isabella', 'lake-isabella', both),
@@ -163,7 +175,9 @@ var Page = React.createClass({
             new Resource('Space Shuttle Discovery', 'shuttle', both),
             new Resource('Lone Star Geyser', 'lone-star', both),
             new Resource('MH370', 'mh370', na),
-            new Resource('São Paulo City', 'sao-paulo-city', ext),
+
+            // This seems to have been shut down.
+            // new Resource('Salzburg', 'salzburg', { eu: true, ext: true }),
         ];
 
         return <div>
