@@ -136,6 +136,7 @@ var Page = React.createClass({
     render: function() {
         var na = { na: true };
         var eu = { eu: true };
+        var ext = { ext: true}
         var both = { na: true, eu: true };
 
         var resources = [
@@ -162,6 +163,7 @@ var Page = React.createClass({
             new Resource('Space Shuttle Discovery', 'shuttle', both),
             new Resource('Lone Star Geyser', 'lone-star', both),
             new Resource('MH370', 'mh370', na),
+            new Resource('São Paulo City', 'sao-paulo-city', ext),
         ];
 
         return <div>
